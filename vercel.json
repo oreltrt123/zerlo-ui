@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/generate/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/generate-data/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
