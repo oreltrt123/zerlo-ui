@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Generative UI",
-  description: "Transform your data into beautiful, interactive React components instantly.",
+  title: "Zerlo",
+  description: "Transform your data into beautiful, interactive React game g components instantly.",
 };
 
 export default function RootLayout({

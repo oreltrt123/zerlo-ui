@@ -1,49 +1,34 @@
-import { Toaster } from "sonner";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Zap } from 'lucide-react';
-import { createClient } from '@/supabase/server';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import AccountMenu from '@/components/account-menu';
+import  Navbar from "@/components/navbar"
+import HeroSection from "@/components/sections/hero-section";
+import AboutSection from "@/components/sections/about-section";
+import PhilosophySection from "@/components/sections/philosophy-section";
+import ContactSection from "@/components/sections/contact-section";
+import ConnectSection from "@/components/sections/connect-section";
+import BrandKitSection from "@/components/sections/brand-kit-section";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+export default function Home() {
   return (
-    <main className="min-h-screen bg-[#fafafa] dark:bg-[#0d1117]">
-      <Toaster richColors position="top-center" />
-      {/* Header */}
-      <div className="border-b border-[#e6e6e6] dark:border-[#30363d] bg-white dark:bg-[#161b22]">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-8">
-            <div /> {/* Spacer */}
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              {user ? (
-                <AccountMenu user={user} />
-              ) : (
-                <Button asChild>
-                  <Link href="/login">Log In</Link>
-                </Button>
-              )}
-            </div>
-          </div>
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#f6f6f6] dark:bg-[#21262d] border border-[#e6e6e6] dark:border-[#30363d] rounded-full text-sm text-[#666666] dark:text-[#8b949e] font-medium">
-              <Zap className="h-3 w-3" />
-              <span>Powered by Google Gemini</span>
-            </div>
-            <h1 className="text-5xl font-[650] text-[#0f1419] dark:text-[#f0f6fc] tracking-[-0.02em] leading-[1.1]">
-              Generative UI
-            </h1>
-            <p className="text-[#666666] dark:text-[#8b949e] text-lg font-[450] max-w-2xl mx-auto leading-relaxed">
-              Transform your data into beautiful, interactive React components instantly.
-              No coding required.
-            </p>
-          </div>
-        </div>
-      </div>
+    <main className="bg-[#030303] text-white overflow-hidden">
+      <Navbar />
+      <HeroSection />
+      <AboutSection />
+      <PhilosophySection />
+      <ConnectSection />
+      <BrandKitSection />
+      <ContactSection />
     </main>
   );
 }
+// import  Navabar from "@/components/navabar"
+
+// export default async function Home() {
+//   return (
+//     <main className="min-h-screen bg-[#fafafa] dark:bg-[#0d1117]">
+//       <Navabar />
+//       <div className="absolute inset-0">
+//         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+        
+//       </div>
+//     </main>
+//   );
+// }
