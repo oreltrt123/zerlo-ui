@@ -7,7 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
+  // DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -75,7 +75,7 @@ export default function AccountMenu({ user }: AccountMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="relative h-8 w-8 rounded-full bg-[#8888881A]">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8 text-black/70 ">
             {avatarUrl ? (
               <AvatarImage src={avatarUrl} alt={username || 'User Avatar'} />
             ) : (
@@ -86,23 +86,22 @@ export default function AccountMenu({ user }: AccountMenuProps) {
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
+      <DropdownMenuContent className="w-36 relative top-[-15px]" align="end" forceMount>
+        {/* <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{username || user?.email || 'Guest'}</p>
             <p className="text-xs leading-none text-muted-foreground">{user?.email || ''}</p>
           </div>
-        </DropdownMenuLabel>
+        </DropdownMenuLabel> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/chat">
-            <UserIcon className="mr-2 h-4 w-4" />
+            <UserIcon className="mr-2 h-4 w-4 text-white" />
             <span>Chat</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="mr-2 h-4 w-4 text-white" />
           <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
