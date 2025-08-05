@@ -63,10 +63,10 @@ export default function HeroSection() {
     <div
       className="relative min-h-screen w-full flex items-center justify-center overflow-hidden"
       style={{
-        backgroundImage: "url('https://static.wixstatic.com/media/343a2a_5c066484f7904623adfe3ee51e4634a8~mv2.jpg/v1/fill/w_1404,h_911,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Hero-bg-base-new.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        background: "linear-gradient(90deg, rgba(235, 247, 255, 1) 0%, rgba(214, 239, 255, 1) 35%, rgba(255, 255, 255, 1) 100%)",
       }}
     >      
       <div className="top-[-100px] relative z-10">
@@ -114,8 +114,10 @@ export default function HeroSection() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.8, ease: "easeOut" }}
-              className="bg-white rounded-xl p-6 hover:shadow-lg"
-            >
+              className="bg-white rounded-xl p-6 
+             hover:shadow-[inset_0_0.5em_1.5em_rgba(0,0,0,0.1),inset_0_0.125em_0.5em_rgba(0,0,0,0.15)] 
+              active:shadow-[inset_0_0.3em_1em_rgba(0,0,0,0.2),inset_0_0.1em_0.4em_rgba(0,0,0,0.25)]"
+              >
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                 <textarea

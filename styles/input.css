@@ -1,0 +1,25 @@
+.r2552esf25_252trewt3er {
+  background: #8888881A;
+  outline: none;
+  padding: 4px 8px;              /* Smaller padding */
+  width: 100%;
+  font-size: 12px;               /* Smaller text size */
+  border: 1px solid #88888800;
+  border-radius: 6px;            /* Slightly smaller radius */
+  height: 28px;                  /* Controls overall height */
+}
+.r2552esf25_252trewt3er:focus { 
+  border: 1px solid rgb(0, 153, 255);
+}
+.r2552esf25_252trewt3erisEditing {
+  background: #8888881A;
+  outline: none;
+  padding: 0px 8px;              /* Smaller padding */
+  width: 100%;
+  font-size: 12px;               /* Smaller text size */
+  border: 1px solid #88888800;
+  border-radius: 6px;            /* Slightly smaller radius */
+}
+.r2552esf25_252trewt3erisEditing:focus {
+  border: 1px solid rgb(0, 153, 255);
+}

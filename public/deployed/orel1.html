@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>orel1</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        }
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+        
+        // Define the component
+        function Component() {
+            const LibraryCollectionTable = () => {
+  const data = [
+    {
+      title: "The Midnight Library",
+      author: "Matt Haig",
+      genre: "Fiction",
+      rating: 4.8,
+      year: 2020,
+      available: "Yes",
+    },
+    {
+      title: "Atomic Habits",
+      author: "James Clear",
+      genre: "Self-Help",
+      rating: 4.9,
+      year: 2018,
+      available: "No",
+    },
+    {
+      title: "Project Hail Mary",
+      author: "Andy Weir",
+      genre: "Sci-Fi",
+      rating: 4.7,
+      year: 2021,
+      available: "Yes",
+    },
+    {
+      title: "Educated",
+      author: "Tara Westover",
+      genre: "Memoir",
+      rating: 4.6,
+      year: 2018,
+      available: "Yes",
+    },
+    {
+      title: "The Silent Patient",
+      author: "Alex Michaelides",
+      genre: "Thriller",
+      rating: 4.5,
+      year: 2019,
+      available: "No",
+    },
+    {
+      title: "Sapiens",
+      author: "Yuval Noah Harari",
+      genre: "History",
+      rating: 4.8,
+      year: 2011,
+      available: "Yes",
+    },
+    {
+      title: "Dune",
+      author: "Frank Herbert",
+      genre: "Sci-Fi",
+      rating: 4.9,
+      year: 1965,
+      available: "Yes",
+    },
+  ];
+
+  const columns = [
+    { accessorKey: "title", header: "Title" },
+    { accessorKey: "author", header: "Author" },
+    { accessorKey: "genre", header: "Genre" },
+    { accessorKey: "rating", header: "Rating" },
+    { accessorKey: "year", header: "Year" },
+    { accessorKey: "available", header: "Available" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Library Collection</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((column) => (
+                <TableHead key={column.accessorKey}>
+                  {column.header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((row, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {columns.map((column) => (
+                  <TableCell key={column.accessorKey}>
+                    {column.accessorKey === "available" ? (
+                      <Badge variant={row[column.accessorKey] === "Yes" ? "outline" : "destructive"}>
+                        {row[column.accessorKey]}
+                      </Badge>
+                    ) : column.accessorKey === "rating" ? (
+                      <div className="flex items-center">
+                        <Progress value={(row[column.accessorKey] / 5) * 100} className="mr-2 h-2 w-[50px]" />
+                        <span>{row[column.accessorKey]}</span>
+                      </div>
+                    ) : (
+                      row[column.accessorKey]
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};
+
+LibraryCollectionTable;
+
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Component));
+    </script>
+</body>
+</html>

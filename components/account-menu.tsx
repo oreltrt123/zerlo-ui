@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/supabase/client';
-import { User } from '@supabase/supabase-js'; // Import Supabase User type
+import { useState, useEffect } from "react";
+import { createClient } from "@/supabase/client";
+import { User } from "@supabase/supabase-js"; // Import Supabase User type
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +10,12 @@ import {
   // DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, User as UserIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Image from "next/image"; // Import Image from next/image
 
 interface AccountMenuProps {
   user: User | null; // Use specific type instead of any
@@ -29,21 +30,21 @@ export default function AccountMenu({ user }: AccountMenuProps) {
   useEffect(() => {
     async function getProfile() {
       if (!user || !user.id) {
-        console.warn('No user or user ID provided.');
+        console.warn("No user or user ID provided.");
         return;
       }
 
       try {
         const { data, error, status } = await supabase
-          .from('profiles')
-          .select('username, avatar_url')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("username, avatar_url")
+          .eq("id", user.id)
           .maybeSingle();
 
-        console.log('Supabase profile fetch response:', { data, error, status });
+        console.log("Supabase profile fetch response:", { data, error, status });
 
         if (error && status !== 406) {
-          console.warn('Supabase error:', error.message, 'status:', status);
+          console.warn("Supabase error:", error.message, "status:", status);
           return;
         }
 
@@ -51,10 +52,10 @@ export default function AccountMenu({ user }: AccountMenuProps) {
           setUsername(data.username || null);
           setAvatarUrl(data.avatar_url || null);
         } else {
-          console.warn('No profile data found for user.id:', user.id);
+          console.warn("No profile data found for user.id:", user.id);
         }
       } catch (error) {
-        console.error('Unexpected error fetching profile:', error);
+        console.error("Unexpected error fetching profile:", error);
       }
     }
 
@@ -64,9 +65,9 @@ export default function AccountMenu({ user }: AccountMenuProps) {
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Error signing out:', error.message);
+      console.error("Error signing out:", error.message);
     } else {
-      router.push('/login');
+      router.push("/login");
       router.refresh();
     }
   };
@@ -74,13 +75,19 @@ export default function AccountMenu({ user }: AccountMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative h-8 w-8 rounded-full bg-[#8888881A]">
-          <Avatar className="h-8 w-8 text-black/70 ">
+        <button className="relative h-8 w-8">
+          <Avatar className="h-8 w-8 text-black/70">
             {avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt={username || 'User Avatar'} />
+              <AvatarImage src={avatarUrl} alt={username || "User Avatar"} />
             ) : (
               <AvatarFallback>
-                <UserIcon className="h-4 w-4" />
+                <Image
+                  src="/assets/images/user.png"
+                  alt="Default User Avatar"
+                  width={23}
+                  height={23}
+                  className="w-[23px]"
+                />
               </AvatarFallback>
             )}
           </Avatar>
@@ -89,8 +96,8 @@ export default function AccountMenu({ user }: AccountMenuProps) {
       <DropdownMenuContent className="w-36 relative top-[-15px]" align="end" forceMount>
         {/* <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{username || user?.email || 'Guest'}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user?.email || ''}</p>
+            <p className="text-sm font-medium leading-none">{username || user?.email || "Guest"}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user?.email || ""}</p>
           </div>
         </DropdownMenuLabel> */}
         <DropdownMenuSeparator />

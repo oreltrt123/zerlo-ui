@@ -10,7 +10,7 @@ export default async function Navbar() {
 
   return (
     <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 w-[95%] max-w-7xl z-50">
-      <div className="bg-[#ffffff60] backdrop-blur-md rounded-full px-6 py-3 flex items-center justify-between">
+      <div className="bg-[#ffffff] backdrop-blur-md rounded-full px-6 py-3 flex items-center justify-between">
         {/* Logo Section */}
         <div className="flex items-center">
         <Link href={'/'}><h1 className="text-2xl font-bold relative top-[-2px] text-black/70 cursor-default">Zerlo</h1></Link>
@@ -22,7 +22,7 @@ export default async function Navbar() {
             href="/" 
             className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-default"
           >
-            Home
+            Blog
           </Link>
           <Link 
             href="/about" 

@@ -1,50 +1,48 @@
-"use client";
+import React from "react";
 
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+export const footerLinks = [
+  { label: "Privacy Policy", href: "/privacy" },
+  // { label: "Terms of Use", href: "/terms" },
+  { label: "Contact Us", href: "/contact" },
+];
 
-export default function Footer() {
-  const [ref, inView] = useInView({
-    triggerOnce: false,
-    threshold: 0.2,
-  });
-
-  const currentYear = new Date().getFullYear();
-
+const Footer = () => {
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      className="fixed bottom-0 left-0 right-0 z-50 px-4"
-    >
-      <motion.div
-        initial={{ scale: 0.98 }}
-        animate={{ scale: 1 }}
-        className="relative max-w-7xl mx-auto mb-6 px-4 py-2 rounded-2xl backdrop-blur-xl bg-white/[0.02] border border-white/10"
-      >
-        {/* Gradient background effect */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/10 via-transparent to-fuchsia-500/10 opacity-50" />
+    <footer className="w-full bg-[rgba(0,0,0,0.05)] py-8 px-4 z-50">
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        {/* Top message */}
+        <div className="flex flex-col gap-1 text-left">
+          <p className="text-[40px] font-semibold text-[#2B2B2B] leading-snug">
+            Zerlo — the smartest way to <span className="text-[rgb(0,153,255)]">build</span><br />
+            your next <span className="text-[rgb(0,153,255)]">winning game</span>
+          </p>
+        </div>
 
-        {/* Animated glow effect */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/5 to-fuchsia-500/5 animate-pulse" />
+        <div className="bg-[#8888881A] h-px w-full" />
 
-        {/* Content */}
-        <div className="relative flex flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-prompt text-white/40">
-              © {currentYear}
-            </span>
-            <span className="text-[9px] font-prompt font-bold text-white/40">
-              Queforia
-            </span>
+        {/* Bottom row with left + right */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          {/* Left side text */}
+          <div className="text-sm text-gray-700 font-medium">
+            <p>© 2025 Zerlo Inc. All rights reserved.</p>
           </div>
 
-          <div className="flex items-center gap-2 text-[9px] text-white/40">
-            <span>All Rights Reserved</span>
+          {/* Right side: two rows of links */}
+          <div className="flex flex-wrap justify-start gap-x-6 gap-y-2 text-sm text-gray-700 font-medium">
+            {footerLinks.map((link, index) => (
+              <a
+                key={index}
+                href={link.href}
+                className="cursor-pointer hover:underline"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </footer>
   );
-}
+};
+
+export default Footer;
