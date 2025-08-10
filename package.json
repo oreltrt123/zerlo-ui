@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/deepseek": "^1.0.3",
     "@ai-sdk/google": "^1.2.19",
     "@babel/standalone": "^7.27.6",
     "@google/generative-ai": "^0.24.1",
