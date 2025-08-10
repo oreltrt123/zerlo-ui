@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import "@/styles/privacy.css"
 
 export default function PrivacyPolicyPage() {
   return (
@@ -62,7 +63,7 @@ export default function PrivacyPolicyPage() {
           <p>
             If you have any questions or concerns about our privacy statement or our processing of your personal data,
             please contact us at{" "}
-            <Link href="mailto:zerlocontactus@gmail.com" className="text-[#0099FF] underline">
+            <Link href="mailto:zerlocontactus@gmail.com" className="text-[#0099FF]">
               zerlocontactus@gmail.com
             </Link>
             .

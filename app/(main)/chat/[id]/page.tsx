@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useCompletion } from "ai/react"
 import { useParams } from "next/navigation"
@@ -35,8 +37,58 @@ export default function ChatIdPage() {
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview")
   const [loading, setLoading] = useState(true)
-  const chatContainerRef = useRef<HTMLDivElement>(null)
-  const messageContextRef = useRef<{ aiMessageId: string; originalUserPrompt: string } | null>(null)
+
+  // Refs for layout and resizing
+  const chatPanelRef = useRef<HTMLDivElement>(null)
+  const chatMessagesRef = useRef<HTMLDivElement>(null) // Ref for the scrollable messages container
+  const [chatMessagesPanelHeight, setChatMessagesPanelHeight] = useState(0)
+
+  // Resizing state and handlers
+  const isResizing = useRef(false)
+  const startY = useRef(0)
+  const startHeight = useRef(0)
+
+  const NAVBAR_HEIGHT = 64 // px, approximate height of ChatNavbar
+  const CHAT_INPUT_HEIGHT = 150 // px, approximate height of ChatInput
+  const DIVIDER_HEIGHT = 4 // px, height of the resizer div
+
+  // Moved handleMouseMove and handleMouseUp definitions before handleMouseDown
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing.current) return
+    const deltaY = e.clientY - startY.current
+    let newHeight = startHeight.current + deltaY
+    if (chatPanelRef.current) {
+      const totalAvailableHeight =
+        chatPanelRef.current.offsetHeight - NAVBAR_HEIGHT - CHAT_INPUT_HEIGHT - DIVIDER_HEIGHT
+      const minHeight = 100 // Minimum height for messages
+      const maxHeight = totalAvailableHeight - 50 // Ensure input area has at least 50px
+      newHeight = Math.max(minHeight, Math.min(newHeight, maxHeight))
+    }
+    setChatMessagesPanelHeight(newHeight)
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    isResizing.current = false
+    document.removeEventListener("mousemove", handleMouseMove)
+    document.removeEventListener("mouseup", handleMouseUp)
+    document.body.style.cursor = ""
+    document.body.style.userSelect = ""
+  }, [handleMouseMove]) // Added handleMouseMove to dependencies
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      isResizing.current = true
+      startY.current = e.clientY
+      if (chatMessagesRef.current) {
+        startHeight.current = chatMessagesRef.current.offsetHeight
+      }
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+      document.body.style.cursor = "ns-resize"
+      document.body.style.userSelect = "none"
+    },
+    [handleMouseMove, handleMouseUp],
+  ) // Added handleMouseMove and handleMouseUp to dependencies
 
   const supabase = createClient()
 
@@ -48,13 +100,11 @@ export default function ChatIdPage() {
       setGeneratedComponent(completion)
       toast.success("Component generated successfully!")
       setViewMode("preview")
-
       // Save the component code to the last AI message
       if (messageContextRef.current) {
         const { aiMessageId } = messageContextRef.current
         console.log("Saving component code to message:", aiMessageId)
         await saveMessageWithComponent(aiMessageId, completion)
-
         // Update the message in state immediately
         setMessages((prev) =>
           prev.map((msg) => (msg.id === aiMessageId ? { ...msg, component_code: completion } : msg)),
@@ -71,6 +121,7 @@ export default function ChatIdPage() {
   })
 
   // Hook for generating the AI's chat response
+  const messageContextRef = useRef<{ aiMessageId: string; originalUserPrompt: string } | null>(null)
   const {
     completion: chatCompletionText,
     isLoading: isLoadingChat,
@@ -81,12 +132,10 @@ export default function ChatIdPage() {
       console.log("Chat response finished:", completion)
       if (messageContextRef.current) {
         const { aiMessageId, originalUserPrompt } = messageContextRef.current
-
         try {
           // Save AI message and get the real ID
           const realAiMessageId = await saveMessage("ai", completion)
           console.log("AI message saved with ID:", realAiMessageId)
-
           // Update the AI message in state with real ID and remove streaming
           setMessages((prev) =>
             prev.map((msg) =>
@@ -95,10 +144,8 @@ export default function ChatIdPage() {
                 : msg,
             ),
           )
-
           // Update context with real ID for component saving
           messageContextRef.current = { aiMessageId: realAiMessageId, originalUserPrompt }
-
           // Generate component
           completeComponent(originalUserPrompt)
         } catch (error) {
@@ -125,33 +172,26 @@ export default function ChatIdPage() {
         .select("*")
         .eq("chat_id", chatId)
         .order("created_at", { ascending: true })
-
       if (error) {
         console.error("Error loading messages:", error)
         throw error
       }
-
       console.log("Loaded messages from database:", data)
-
       const loadedMessages: Message[] = data.map((msg) => ({
         id: msg.id,
         sender: msg.sender,
         content: msg.content,
         component_code: msg.component_code,
       }))
-
       console.log("Processed messages:", loadedMessages)
       console.log(
         "Messages with component_code:",
         loadedMessages.filter((msg) => msg.component_code),
       )
-
       setMessages(loadedMessages)
-
       // Set the latest component code if available
       const messagesWithComponents = data.filter((msg) => msg.component_code)
       console.log("Messages with components:", messagesWithComponents)
-
       if (messagesWithComponents.length > 0) {
         const lastMessageWithComponent = messagesWithComponents[messagesWithComponents.length - 1]
         console.log("Setting latest component:", lastMessageWithComponent.component_code)
@@ -172,13 +212,10 @@ export default function ChatIdPage() {
       } = await supabase.auth.getUser()
       if (!user) return
       setUser(user)
-
       // Get chat details
       const { data: chatData, error: chatError } = await supabase.from("chats").select("*").eq("id", chatId).single()
-
       if (chatError) throw chatError
       setChat(chatData)
-
       // Load messages
       await loadMessages()
     } catch (error) {
@@ -203,17 +240,13 @@ export default function ChatIdPage() {
         ])
         .select()
         .single()
-
       if (error) {
         console.error("Error inserting message:", error)
         throw error
       }
-
       console.log("Message saved with ID:", data.id)
-
       // Update chat's updated_at timestamp
       await supabase.from("chats").update({ updated_at: new Date().toISOString() }).eq("id", chatId)
-
       return data.id // Return the generated ID
     } catch (error) {
       console.error("Error saving message:", error)
@@ -229,12 +262,10 @@ export default function ChatIdPage() {
         .update({ component_code: componentCode })
         .eq("id", messageId)
         .select()
-
       if (error) {
         console.error("Error updating message with component:", error)
         throw error
       }
-
       console.log("Message updated successfully:", data)
     } catch (error) {
       console.error("Error saving component code:", error)
@@ -247,28 +278,21 @@ export default function ChatIdPage() {
       toast.warning("Please enter a message.")
       return
     }
-
     const tempUserMessageId = `temp-user-${Date.now()}`
     const tempAiMessageId = `temp-ai-${Date.now() + 1}`
     const currentInput = inputPrompt
-
     const userMessage: Message = { id: tempUserMessageId, sender: "user", content: currentInput }
     const aiMessage: Message = { id: tempAiMessageId, sender: "ai", content: "Thinking...", isStreaming: true }
-
     setMessages((prev) => [...prev, userMessage, aiMessage])
     setInputPrompt("")
     setGeneratedComponent("")
-
     try {
       // Save user message and get the real ID
       const userMessageId = await saveMessage("user", currentInput)
-
       // Update the message in state with the real ID
       setMessages((prev) => prev.map((msg) => (msg.id === tempUserMessageId ? { ...msg, id: userMessageId } : msg)))
-
       // Store context for AI message
       messageContextRef.current = { aiMessageId: tempAiMessageId, originalUserPrompt: currentInput }
-
       // Generate AI response
       await completeChat(currentInput)
     } catch (error) {
@@ -302,11 +326,31 @@ export default function ChatIdPage() {
     }
   }, [chatCompletionText, isLoadingChat])
 
+  // Scroll to bottom of messages
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, chatMessagesPanelHeight]) // Also scroll if panel height changes
+
+  // Initialize chatMessagesPanelHeight on mount and when chatPanelRef is available
+  useEffect(() => {
+    const calculateInitialHeight = () => {
+      if (chatPanelRef.current) {
+        const initialMessagesHeight =
+          chatPanelRef.current.offsetHeight - NAVBAR_HEIGHT - CHAT_INPUT_HEIGHT - DIVIDER_HEIGHT
+        setChatMessagesPanelHeight(initialMessagesHeight)
+      }
+    }
+    // Use a small timeout to ensure all elements are rendered and measured
+    const timeoutId = setTimeout(calculateInitialHeight, 100)
+    // Recalculate on window resize
+    window.addEventListener("resize", calculateInitialHeight)
+    return () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener("resize", calculateInitialHeight)
+    }
+  }, [loading]) // Depend on loading to ensure initial calculation after data fetch
 
   // Debug effect to log messages changes
   useEffect(() => {
@@ -335,35 +379,45 @@ export default function ChatIdPage() {
 
   return (
     <div className="flex h-screen">
-      <main className="flex-1 min-h-screen bg-[#fafafa] dark:bg-[#0d1117] flex flex-col">
-        <Toaster richColors position="top-center" />
-
+      <Toaster richColors position="top-center" />
+      {/* Left Column: Chat Interface */}
+      <div
+        ref={chatPanelRef}
+        className="w-1/2 flex flex-col border-r border-[#e6e6e6] dark:border-[#30363d] bg-white dark:bg-[#161b22]"
+      >
         <ChatNavbar chatName={chat.name} messages={messages} />
-
-        {/* Main Content - Two Columns */}
-        <div className="flex flex-col lg:flex-row flex-1">
-          {/* Left Column: Chat Interface */}
-          <div className="w-full lg:w-1/2 bg-white dark:bg-[#161b22] flex flex-col">
-            <ChatMessages ref={chatContainerRef} messages={messages} />
-            <ChatInput
-              inputPrompt={inputPrompt}
-              setInputPrompt={setInputPrompt}
-              onSendMessage={handleSendMessage}
-              isGenerating={isGenerating}
-            />
-          </div>
-
-          {/* Right Column: Generated Component Preview/Code */}
-          <div className="w-full lg:w-1/2 bg-white dark:bg-[#161b22] overflow-hidden flex flex-col">
-            <ComponentPreview
-              generatedComponent={generatedComponent}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              onCopyCode={handleCopyCode}
-            />
-          </div>
+        {/* Resizable Chat Messages Area */}
+        <div
+          ref={chatMessagesRef}
+          style={{ height: `${chatMessagesPanelHeight}px` }}
+          className="relative overflow-y-auto flex flex-col gap-4 p-6"
+        >
+          <ChatMessages messages={messages} />
         </div>
-      </main>
+        {/* Resizer */}
+        <div
+          onMouseDown={handleMouseDown}
+          className="h-1 bg-gray-200 dark:bg-gray-700 cursor-ns-resize flex items-center justify-center"
+        >
+          <div className="w-8 h-0.5 bg-gray-400 dark:bg-gray-500 rounded-full" />
+        </div>
+        {/* Chat Input */}
+        <ChatInput
+          inputPrompt={inputPrompt}
+          setInputPrompt={setInputPrompt}
+          onSendMessage={handleSendMessage}
+          isGenerating={isGenerating}
+        />
+      </div>
+      {/* Right Column: Generated Component Preview/Code */}
+      <div className="w-1/2 flex flex-col bg-white dark:bg-[#161b22] overflow-hidden">
+        <ComponentPreview
+          generatedComponent={generatedComponent}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          onCopyCode={handleCopyCode}
+        />
+      </div>
     </div>
   )
 }

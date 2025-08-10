@@ -108,7 +108,7 @@ export default function HeroSection() {
               className="text-lg sm:text-xl max-w-lg mx-auto"
               style={{fontSize: "15px", color: "#2B2B2B"}}
             >
-             Create professional <span style={{ color: "rgb(0,153,255)" }}>games in one</span> <span style={{ color: "white" }}>seamless format</span>
+             Create professional <span style={{ color: "rgb(0,153,255)" }}>games in one</span> seamless format
             </motion.p>
             <motion.div
               initial={{ y: 20, opacity: 0 }}

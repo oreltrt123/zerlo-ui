@@ -1,7 +1,6 @@
 "use client"
-
-import { Sparkles, Copy } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Sparkles, Copy } from 'lucide-react'
+// import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DynamicComponent from "@/components/dynamic-component"
 
@@ -38,11 +37,11 @@ export function ComponentPreview({ generatedComponent, viewMode, setViewMode, on
               <TabsTrigger value="code" className="text-xs font-[450]">
                 Code
               </TabsTrigger>
+              <TabsTrigger value="code" className="text-xs font-[450]" onClick={onCopyCode}>
+                <Copy className="h-4 w-4" />
+              </TabsTrigger>
             </TabsList>
           </Tabs>
-          <Button variant="outline" size="sm" onClick={onCopyCode} className="h-8 px-2 bg-transparent">
-            <Copy className="h-4 w-4" />
-          </Button>
         </div>
       </div>
       <Tabs value={viewMode} className="flex-1 flex flex-col">

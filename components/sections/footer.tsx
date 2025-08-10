@@ -1,8 +1,8 @@
 import React from "react";
 
 export const footerLinks = [
-  { label: "Privacy Policy", href: "/privacy" },
-  // { label: "Terms of Use", href: "/terms" },
+  { label: "Privacy Policy", href: "/legal/privacy" },
+  { label: "Terms of Use", href: "/legal/terms" },
   { label: "Contact Us", href: "/contact" },
 ];
 

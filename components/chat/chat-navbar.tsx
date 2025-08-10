@@ -1,6 +1,5 @@
 "use client"
-
-import { Sparkles } from "lucide-react"
+import { Sparkles } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { DeployModal } from "./deploy-modal"
 import { useState, useEffect } from "react"
@@ -48,7 +47,8 @@ export function ChatNavbar({ chatName, messages }: ChatNavbarProps) {
 
   return (
     <>
-      <div className="border-b border-[#e6e6e6] dark:border-[#30363d] bg-white dark:bg-[#161b22] p-4">
+      {/* Adjusted padding to make it smaller */}
+      <div className="border-b border-[#e6e6e6] dark:border-[#30363d] bg-white dark:bg-[#161b22] py-2 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-8 h-8 bg-[#f6f6f6] dark:bg-[#21262d] rounded-lg">
@@ -67,7 +67,7 @@ export function ChatNavbar({ chatName, messages }: ChatNavbarProps) {
             </span>
             <Button
               onClick={handleDeployClick}
-              className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              variant={'blueFont'}
               disabled={!hasDeployableMessages}
             >
               Deploy
@@ -75,7 +75,6 @@ export function ChatNavbar({ chatName, messages }: ChatNavbarProps) {
           </div>
         </div>
       </div>
-
       <DeployModal isOpen={showDeployModal} onClose={() => setShowDeployModal(false)} messages={messages} />
     </>
   )
