@@ -1,9 +1,10 @@
 "use client"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Textarea } from "@/components/ui/textareaChat"
 import { Sparkles } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import "@/styles/button.css"
 import Image from "next/image"
 
 const exampleData = {
@@ -35,11 +36,11 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
   }
 
   const labelMap: Record<string, { label: string; image: string }> = {
-    fitness: { label: "Fitness Tracking", image: "/placeholder.svg?height=16&width=16" },
-    library: { label: "Library Collection", image: "/placeholder.svg?height=16&width=16" },
-    orders: { label: "Restaurant Orders", image: "/placeholder.svg?height=16&width=16" },
-    weather: { label: "Weather Monitoring", image: "/placeholder.svg?height=16&width=16" },
-    employees: { label: "Employee Directory", image: "/placeholder.svg?height=16&width=16" },
+    fitness: { label: "Fitness Tracking", image: "/assets/images/fitness.png" },
+    library: { label: "Library Collection", image: "/assets/images/library.png" },
+    orders: { label: "Restaurant Orders", image: "/assets/images/orders.png" },
+    weather: { label: "Weather Monitoring", image: "/assets/images/weather.png" },
+    employees: { label: "Employee Directory", image: "/assets/images/employees.png" },
   }
 
   return (
@@ -53,7 +54,7 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                 key={key}
                 variant="outline"
                 size="sm"
-                className="h-8 px-3 text-muted-foreground hover:text-muted-foreground text-xs shadow-none font-medium hover:border-blue-300 dark:hover:border-blue-400 bg-gray-50 flex items-center gap-2"
+                className="r2552esf25_252trewt3erblueFontDocsButtonTextera h-8 px-3 text-muted-foreground hover:text-muted-foreground text-xs shadow-none font-[500] hover:border-[rgba(0,153,255,0.25)] dark:hover:border-[#58a6ff] bg-[#8888881A] flex items-center gap-2"
                 onClick={() => handleExampleClick(exampleText)}
               >
                 {image && <Image src={image || "/placeholder.svg"} alt={`${label} icon`} width={16} height={16} />}
@@ -66,9 +67,14 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
 
       <div className="max-w-2xl mx-auto">
         <div className="relative">
-          <div className="flex items-center bg-white rounded-2xl px-4 py-6 gap-3 shadow-lg border">
+          <div
+            className="flex items-center bg-white rounded-2xl px-4 py-6 gap-3 shadow-2xl"
+            style={{
+              boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+            }}
+          >
             <Textarea
-              className="min-h-[24px] max-h-[120px] resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-gray-400 text-base p-0"
+              className="top-[-13px] relative min-h-[24px] max-h-[120px] resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-gray-400 text-base p-0"
               placeholder="Describe the component you want to build, or paste structured data (CSV, JSON, etc.)."
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
@@ -85,14 +91,14 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="absolute bottom-2 right-12 h-8 px-3 hover:bg-gray-100 text-muted-foreground hover:text-muted-foreground rounded-lg border-0 font-medium text-xs"
+                  variant="ghost" // Changed from "none" to "ghost" for shadcn/ui compatibility
+                  className="r2552esf25_252trewt3erblueFontDocsButtonTextera absolute bottom-2 right-12 h-8 px-3 hover:bg-[#88888811] text-muted-foreground hover:text-muted-foreground rounded-lg border-0 font-medium text-xs"
                   aria-label="Select model"
                   title={`Current model: ${model === "gemini" ? "Gemini 2.5 Flash" : "GPT-4"}`}
                 >
                   {model === "gemini" ? (
                     <Image
-                      src="/placeholder.svg?height=24&width=24"
+                      src="/assets/images/gemini.png"
                       alt="Gemini"
                       width={24}
                       height={24}
@@ -100,7 +106,7 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                     />
                   ) : (
                     <Image
-                      src="/placeholder.svg?height=24&width=24"
+                      src="/assets/images/chatGPT.png"
                       alt="GPT"
                       width={24}
                       height={24}
@@ -109,16 +115,24 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-white rounded-md shadow-lg border" align="end" sideOffset={8}>
+              <DropdownMenuContent
+                className="w-48 bg-white rounded-md"
+                align="end"
+                forceMount
+                sideOffset={8}
+                style={{
+                  boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                }}
+              >
                 <DropdownMenuItem
-                  className={`cursor-pointer p-3 text-muted-foreground hover:text-muted-foreground ${
-                    model === "gemini" ? "font-bold bg-gray-50" : "hover:bg-gray-50"
+                  className={`cursor-default p-3 text-muted-foreground hover:text-muted-foreground ${
+                    model === "gemini" ? "font-bold bg-[#88888811]" : "hover:bg-gray-50"
                   }`}
                   onClick={() => setModel("gemini")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-gray-600 text-sm">✨</span>
+                    <div className="w-8 h-8 bg-[#88888811] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">✨</span>
                     </div>
                     <div>
                       <div className="font-semibold">Gemini 2.5 Flash</div>
@@ -127,14 +141,14 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className={`cursor-pointer p-3 text-muted-foreground hover:text-muted-foreground ${
-                    model === "gpt" ? "font-bold bg-gray-50" : "hover:bg-gray-50"
+                  className={`cursor-default p-3 text-muted-foreground hover:text-muted-foreground ${
+                    model === "gpt" ? "font-bold bg-[#88888811]" : "hover:bg-gray-50"
                   }`}
                   onClick={() => setModel("gpt")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-gray-600 text-sm">🤖</span>
+                    <div className="w-8 h-8 bg-[#88888811] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">🤖</span>
                     </div>
                     <div>
                       <div className="font-semibold">GPT-4</div>
@@ -150,7 +164,7 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
               onClick={handleSendClick}
               disabled={isGenerating || !inputPrompt.trim()}
               size="icon"
-              className="absolute bottom-2 right-2 h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white rounded-lg border-0 disabled:bg-gray-300 disabled:text-gray-500 shadow-none"
+              className="r2552esf25_252trewt3erblueFontDocsButtonTextera absolute bottom-2 right-2 h-8 w-8 bg-[#0099FF] text-white rounded-[8px] border-0 disabled:bg-[#e6e6e6] disabled:text-[#8c9196] shadow-none"
               aria-label="Send message"
             >
               {isGenerating ? (

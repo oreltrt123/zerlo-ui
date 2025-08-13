@@ -132,9 +132,9 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                 </div>
               ) : (
                 <>
-                  <div
-                    className={`p-3 rounded-lg ${
-                      msg.sender === "user" ? "bg-gray-100 text-gray-900" : "bg-white text-gray-800 border"
+                <div
+                  className={`p-3 rounded-lg ${
+                    msg.sender === "user" ? "bg-[#E9E9E980] text-[#0d0d0ddc]" : "bg-white text-[#0d0d0db6]"
                     }`}
                   >
                     {msg.content}
@@ -153,7 +153,11 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                             <MoreHorizontal className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white shadow-lg border">
+                        <DropdownMenuContent align="end" className="w-32 bg-white"
+                      style={{
+                        boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                      }}
+                        >
                           <DropdownMenuItem
                             onClick={() => handleEditMessage(msg.id, msg.content)}
                             className="hover:bg-gray-50 text-muted-foreground hover:text-muted-foreground"
@@ -181,7 +185,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                               onClick={() => handleLikeMessage(msg.id)}
                               className={`h-6 w-6 p-0 ${likedMessages.has(msg.id) ? "text-green-600" : "text-gray-400 hover:text-green-600"}`}
                             >
-                              <Image src="/placeholder.svg?height=16&width=16" alt="Like" width={16} height={16} />
+                              <Image src="/assets/images/like.png" alt="Like" width={16} height={16} />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Like</TooltipContent>
@@ -194,7 +198,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                               onClick={() => handleDislikeMessage(msg.id)}
                               className={`h-6 w-6 p-0 ${dislikedMessages.has(msg.id) ? "text-red-600" : "text-gray-400 hover:text-red-600"}`}
                             >
-                              <Image src="/placeholder.svg?height=16&width=16" alt="Dislike" width={16} height={16} />
+                              <Image src="/assets/images/dislike.png" alt="Dislike" width={16} height={16} />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Dislike</TooltipContent>
@@ -208,7 +212,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                               className="h-6 w-6 p-0 text-gray-400 hover:text-blue-600"
                             >
                               <Image
-                                src="/placeholder.svg?height=16&width=16"
+                                src="/assets/images/regenerate.png"
                                 alt="Regenerate"
                                 width={16}
                                 height={16}
@@ -225,7 +229,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                               onClick={() => handleShareMessage(msg.content)}
                               className="h-6 w-6 p-0 text-gray-400 hover:text-purple-600"
                             >
-                              <Image src="/placeholder.svg?height=16&width=16" alt="Share" width={16} height={16} />
+                              <Image src="/assets/images/share.png" alt="Share" width={16} height={16} />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Share</TooltipContent>
@@ -240,7 +244,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                                 className="h-6 w-6 p-0 text-gray-400 hover:text-orange-600"
                               >
                                 <Image
-                                  src="/placeholder.svg?height=16&width=16"
+                                  src="/assets/images/restore.png"
                                   alt="Restore Component"
                                   width={16}
                                   height={16}
