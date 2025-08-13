@@ -1,71 +1,67 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import type React from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import type { User } from "@supabase/supabase-js"
-import { ChatSidebar } from "@/components/chat-sidebar"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textareaChat"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { InviteModal } from "@/components/chat/invite-modal"
+import { toast } from "react-toastify"
+import {
+  Send,
+  ImageIcon,
+  Paperclip,
+  Mic,
+  MoreHorizontal,
+  Plus,
+  MessageSquare,
+  Settings,
+  LogOut,
+  FileText,
+  Camera,
+  Edit3,
+  Trash2,
+  UserPlus,
+} from "lucide-react"
+import "@/styles/button.css"
 
-// Define custom CSS for animations and layout
-const styles = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fadeIn {
-    animation: fadeIn 0.8s ease-out forwards;
-  }
-  .gradient-text {
-    background: linear-gradient(90deg, #0099ff, #00ccff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .tab {
-    padding: 8px 16px;
-    margin-right: 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-  }
-  .tab-active {
-    background-color: #0099ff;
-    color: white;
-  }
-  .tab-inactive {
-    background-color: #f3f4f6;
-    color: #374151;
-  }
-  .tab-inactive:hover {
-    background-color: #e5e7eb;
-  }
-  .menu {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  .menu-item {
-    padding: 8px 16px;
-    color: #fff;
-    cursor: pointer;
-  }
-  .menu-item:hover {
-    background-color: #333;
-  }`
+interface Chat {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
 
-export default function ChatPage() {
-  const [chatName, setChatName] = useState("")
+interface Invite {
+  id: string
+  sender_name: string
+  sender_email: string
+  recipient_email: string
+  status: string
+}
+
+export default function ModernChatPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  // Removed setShowRecentGames as it was never used. The sidebar will always show if hasChats is true.
-  const showRecentGames = true
-  const [hasChats, setHasChats] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
+  const [message, setMessage] = useState("")
+  const [chats, setChats] = useState<Chat[]>([])
+  const [filteredChats, setFilteredChats] = useState<Chat[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [editingChatId, setEditingChatId] = useState<string | null>(null)
+  const [editingChatName, setEditingChatName] = useState("")
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [pendingInvites, setPendingInvites] = useState<Invite[]>([])
 
   const router = useRouter()
   const supabase = createClient()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const getUser = useCallback(async () => {
     try {
@@ -80,38 +76,162 @@ export default function ChatPage() {
     }
   }, [supabase])
 
-  const checkChats = useCallback(async () => {
+  const loadChats = useCallback(async () => {
     if (!user) return
-    try {
-      const { data, error } = await supabase.from("chats").select("id").eq("user_id", user.id)
-      if (error) throw error
-      setHasChats(data && data.length > 0)
-    } catch (error) {
-      console.error("Error checking chats:", error)
-    }
-  }, [supabase, user])
-
-  useEffect(() => {
-    getUser()
-  }, [getUser])
-
-  useEffect(() => {
-    if (user) checkChats()
-  }, [user, checkChats])
-
-  const handleCreateChat = async () => {
-    if (!chatName.trim() || !user) return
     try {
       const { data, error } = await supabase
         .from("chats")
-        .insert([{ name: chatName.trim(), user_id: user.id }])
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+
+      if (error) throw error
+      setChats(data || [])
+      setFilteredChats(data || [])
+    } catch (error) {
+      console.error("Error loading chats:", error)
+    }
+  }, [supabase, user])
+
+  const loadPendingInvites = useCallback(async () => {
+    if (!user) return
+    try {
+      const { data, error } = await supabase
+        .from("invites")
+        .select("*")
+        .eq("recipient_email", user.email)
+        .eq("status", "pending")
+
+      if (error) throw error
+      setPendingInvites(data || [])
+    } catch (error) {
+      console.error("Error loading pending invites:", error)
+    }
+  }, [supabase, user])
+
+  const handleApproveInvite = async (inviteId: string) => {
+    try {
+      const { error } = await supabase.from("invites").update({ status: "approved" }).eq("id", inviteId)
+
+      if (error) throw error
+      toast.success("Invite approved!")
+      loadPendingInvites()
+    } catch (error) {
+      console.error("Error approving invite:", error)
+      toast.error("Failed to approve invite")
+    }
+  }
+
+  const handleRejectInvite = async (inviteId: string) => {
+    try {
+      const { error } = await supabase.from("invites").update({ status: "rejected" }).eq("id", inviteId)
+
+      if (error) throw error
+      toast.success("Invite rejected")
+      loadPendingInvites()
+    } catch (error) {
+      console.error("Error rejecting invite:", error)
+      toast.error("Failed to reject invite")
+    }
+  }
+
+  const handleCreateNewChat = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from("chats")
+        .insert([
+          {
+            name: "New Chat",
+            user_id: user.id,
+          },
+        ])
         .select()
         .single()
+
       if (error) throw error
+
       router.push(`/chat/${data.id}`)
-      setHasChats(true)
+      loadChats()
     } catch (error) {
       console.error("Error creating chat:", error)
+    }
+  }
+
+  const handleDeleteChat = async (chatId: string) => {
+    if (!user) return
+    try {
+      const { error } = await supabase.from("chats").delete().eq("id", chatId).eq("user_id", user.id)
+
+      if (error) throw error
+      loadChats()
+    } catch (error) {
+      console.error("Error deleting chat:", error)
+    }
+  }
+
+  const handleEditChat = async (chatId: string, newName: string) => {
+    if (!user || !newName.trim()) return
+    try {
+      const { error } = await supabase
+        .from("chats")
+        .update({ name: newName.trim() })
+        .eq("id", chatId)
+        .eq("user_id", user.id)
+
+      if (error) throw error
+      setEditingChatId(null)
+      setEditingChatName("")
+      loadChats()
+    } catch (error) {
+      console.error("Error updating chat:", error)
+    }
+  }
+
+  const startEditingChat = (chat: Chat) => {
+    setEditingChatId(chat.id)
+    setEditingChatName(chat.name)
+  }
+
+  const handleStartNewChat = async () => {
+    if (!message.trim() || !user) return
+
+    try {
+      const { data, error } = await supabase
+        .from("chats")
+        .insert([
+          {
+            name: message.trim().slice(0, 50) + (message.length > 50 ? "..." : ""),
+            user_id: user.id,
+          },
+        ])
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Save the first message
+      await supabase.from("messages").insert([
+        {
+          content: message.trim(),
+          sender: "user",
+          chat_id: data.id,
+          user_id: user.id,
+        },
+      ])
+
+      // Navigate to the new chat with the message already sent
+      router.push(`/chat/${data.id}?autoSend=true`)
+    } catch (error) {
+      console.error("Error creating chat:", error)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleStartNewChat()
     }
   }
 
@@ -124,14 +244,41 @@ export default function ChatPage() {
     }
   }
 
-  const handleSettings = () => {
-    router.push("/settings")
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
+    }
   }
+
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [message])
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredChats(chats)
+    } else {
+      const filtered = chats.filter((chat) => chat.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      setFilteredChats(filtered)
+    }
+  }, [searchQuery, chats])
+
+  useEffect(() => {
+    getUser()
+  }, [getUser])
+
+  useEffect(() => {
+    if (user) {
+      loadChats()
+      loadPendingInvites()
+    }
+  }, [user, loadChats, loadPendingInvites])
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-950">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     )
   }
@@ -142,87 +289,356 @@ export default function ChatPage() {
   }
 
   return (
-    <div
-      className="flex min-h-screen bg-white dark:bg-[#0d1117] p-4 relative"
-      style={{
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundImage: "linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)",
-      }}
-    >
-      <style>{styles}</style>
-      <main className="flex flex-1 items-center justify-center">
-        <div className="rounded-xl p-6 w-full max-w-xl z-50">
-          <h1 className="text-3xl font-bold text-center animate-fadeIn bg-gradient-to-r from-gray-900 via-[#0099FF] to-gray-900 bg-clip-text text-transparent animate-welcome mb-4">
-            What game would you build today?
-          </h1>
-          <div className="bg-white rounded-xl p-6 w-full border border-[#8888881A]">
-            <div className="space-y-4">
-              <div className="relative">
-                <textarea
-                  value={chatName}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault()
-                      handleCreateChat()
-                    }
-                  }}
-                  onChange={(e) => setChatName(e.target.value)}
-                  placeholder="Share your game idea — start creating, playing, and publishing!"
-                  className="w-full rounded-md text-black placeholder-gray-400 focus:outline-none h-[120px] resize-none"
-                />
-                <button
-                  className="absolute bottom-3 right-2 p-2 bg-[rgb(0,153,255)] text-white rounded-[8px] hover:bg-[rgba(0,153,255,0.83)] transition-colors disabled:opacity-50"
-                  onClick={handleCreateChat}
-                  disabled={!chatName.trim()}
+    <TooltipProvider>
+      <div className="flex h-screen bg-white">
+        {/* Sidebar */}
+        <div className="w-64 bg-[#f9f9f9] border-r border-[#8888881A] flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-[#8888881A] space-y-2">
+            <Button
+              onClick={handleCreateNewChat}
+              className="w-full justify-start gap-2 bg-[#8888881A] text-muted-foreground hover:bg-[#88888811] font-medium shadow-none"
+            >
+              <Plus className="h-4 w-4" />
+              New Chat
+            </Button>
+
+            <Button
+              onClick={() => setShowInviteModal(true)}
+              className="w-full justify-start gap-2 bg-[#0099FF1A] text-[#0099FF] hover:bg-[#0099FF11] font-medium shadow-none"
+            >
+              <UserPlus className="h-4 w-4" />
+              Invite User
+            </Button>
+          </div>
+
+          {pendingInvites.length > 0 && (
+            <div className="p-4 border-b border-[#8888881A]">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Pending Invites</h3>
+              {pendingInvites.map((invite) => (
+                <div key={invite.id} className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg mb-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{invite.sender_name || invite.sender_email}</p>
+                    <p className="text-xs text-gray-500">wants to collaborate</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      className="h-6 px-2 text-xs bg-green-600 text-white"
+                      onClick={() => handleApproveInvite(invite.id)}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs bg-transparent"
+                      onClick={() => handleRejectInvite(invite.id)}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search */}
+          <div className="p-4 border-b border-[#8888881A]">
+            <div className="relative">
+              <Input
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Chat List */}
+          <div className="flex-1 overflow-y-auto p-2">
+            {filteredChats.length === 0 ? (
+              <div className="text-xs text-gray-500 text-center p-4">
+                {searchQuery ? "No chats found" : "No chats yet"}
+              </div>
+            ) : (
+              filteredChats.map((chat) => (
+                <div key={chat.id} className="group relative mb-1">
+                  {editingChatId === chat.id ? (
+                    <div className="flex items-center gap-2 p-2">
+                      <Input
+                        value={editingChatName}
+                        onChange={(e) => setEditingChatName(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            handleEditChat(chat.id, editingChatName)
+                          } else if (e.key === "Escape") {
+                            setEditingChatId(null)
+                            setEditingChatName("")
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEditChat(chat.id, editingChatName)}
+                        className="r2552esf25_252trewt3erblueFontDocs h-8 w-8 justify-start gap-2 bg-[#8888881A] text-muted-foreground hover:text-muted-foreground hover:bg-[#88888811] font-medium shadow-none"
+                      >
+                        <Send className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        className="r2552esf25_252trewt3erblueFontDocs flex-1 justify-start h-auto p-3 pr-8 text-muted-foreground hover:bg-[#8888881A] hover:text-muted-foreground"
+                        onClick={() => router.push(`/chat/${chat.id}`)}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span className="truncate text-left">{chat.name}</span>
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-muted-foreground"
+                          >
+                            <MoreHorizontal className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-32 bg-white"
+                          style={{
+                            boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                          }}
+                        >
+                          <DropdownMenuItem
+                            onClick={() => startEditingChat(chat)}
+                            className="hover:bg-[#8888881A] text-muted-foreground hover:text-muted-foreground"
+                          >
+                            <Edit3 className="h-3 w-3 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteChat(chat.id)}
+                            className="hover:bg-[#f831310e] text-[#f8313198] hover:text-[#f8313198]"
+                          >
+                            <Trash2 className="h-3 w-3 mr-2 text-[#f8313198]" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* User Menu */}
+          <div className="p-4 border-t border-[#8888881A]">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </button>
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder.svg"} />
+                    <AvatarFallback className="bg-gray-700 text-white">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{user.email}</span>
+                  <MoreHorizontal className="h-4 w-4 ml-auto" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-white"
+                style={{
+                  boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                }}
+              >
+                <DropdownMenuItem
+                  onClick={() => router.push("/settings")}
+                  className="text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Welcome Screen */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="max-w-2xl w-full text-center space-y-8">
+              <div className="space-y-6">
+                <h1 className="text-4xl font-normal text-black">What can I help with?</h1>
+
+                <div className="max-w-2xl mx-auto">
+                  <div className="relative">
+                    <div
+                      className="flex items-center bg-white rounded-full px-4 py-3 gap-3 shadow-2xl"
+                      style={{
+                        boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                      }}
+                    >
+                      {/* Plus Button with Attachment Options */}
+                      <AttachmentButton />
+
+                      {/* Text Input */}
+                      <div className="flex-1">
+                        <Textarea
+                          ref={textareaRef}
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Ask anything"
+                          className="min-h-[24px] max-h-[120px] resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-gray-400 text-base p-0"
+                          rows={1}
+                        />
+                      </div>
+
+                      {/* Voice Input */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:bg-[#8888881A] rounded-full p-2"
+                          >
+                            <Mic className="h-5 w-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Voice input</TooltipContent>
+                      </Tooltip>
+
+                      {/* Send Button */}
+                      {message.trim() && (
+                        <Button
+                          onClick={handleStartNewChat}
+                          size="sm"
+                          className="bg-white text-black hover:bg-gray-200 rounded-full p-2 transition-all duration-200"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-      {showRecentGames && hasChats && (
-        <div className="absolute top-5 right-5 bg-white dark:bg-gray-900 rounded-xl w-80 border border-[#8888881A] z-50">
-          <ChatSidebar user={user} />
+
+        {/* Hidden file input */}
+        <input ref={fileInputRef} type="file" className="hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt" />
+
+        <InviteModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} />
+      </div>
+    </TooltipProvider>
+  )
+}
+
+function AttachmentButton() {
+  const [isOpen, setIsOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsOpen(!isOpen)}
+        className="text-gray-400 hover:bg-[#8888881A] rounded-full p-2 transition-all duration-200"
+      >
+        <Plus className={`h-5 w-5 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`} />
+      </Button>
+
+      {isOpen && (
+        <div
+          className="absolute bottom-full left-0 mb-2 bg-white rounded-xl p-2 shadow-2xl animate-in slide-in-from-bottom-2 duration-200"
+          style={{
+            boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+          }}
+        >
+          <div className="grid grid-cols-2 gap-2 w-48">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center gap-2 h-16 text-gray-700 hover:bg-[#8888881A] rounded-lg"
+                >
+                  <Paperclip className="h-5 w-5" />
+                  <span className="text-xs">File</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Upload file</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex flex-col items-center gap-2 h-16 text-gray-700 hover:bg-[#8888881A] rounded-lg"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                  <span className="text-xs">Image</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Upload image</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex flex-col items-center gap-2 h-16 text-gray-700 hover:bg-[#8888881A] rounded-lg"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span className="text-xs">Camera</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Take photo</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex flex-col items-center gap-2 h-16 text-gray-700 hover:bg-[#8888881A] rounded-lg"
+                >
+                  <FileText className="h-5 w-5" />
+                  <span className="text-xs">Document</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Upload document</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       )}
-      <div className="absolute top-10 right-10">
-        <button
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-          onClick={() => setShowMenu(!showMenu)}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="6" r="2" />
-            <circle cx="12" cy="12" r="2" />
-            <circle cx="12" cy="18" r="2" />
-          </svg>
-        </button>
-        {showMenu && (
-          <div className="menu">
-            <div className="menu-item" onClick={handleSettings}>
-              Settings
-            </div>
-            <div className="menu-item" onClick={handleLogout}>
-              Log Out
-            </div>
-          </div>
-        )}
-      </div>
+
+      <input ref={fileInputRef} type="file" className="hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt" />
     </div>
   )
 }

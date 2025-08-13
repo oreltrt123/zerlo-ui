@@ -1,17 +1,27 @@
 "use client"
-import { Sparkles, Copy } from 'lucide-react'
-// import { Button } from "@/components/ui/button"
+import { Sparkles } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DynamicComponent from "@/components/dynamic-component"
+import { Button } from "@/components/ui/button"
+
+import { useState } from "react"
 
 interface ComponentPreviewProps {
   generatedComponent: string
   viewMode: "preview" | "code"
   setViewMode: (mode: "preview" | "code") => void
   onCopyCode: () => void
+  onFullScreenPreview?: () => void
 }
 
-export function ComponentPreview({ generatedComponent, viewMode, setViewMode, onCopyCode }: ComponentPreviewProps) {
+export function ComponentPreview({
+  generatedComponent,
+  viewMode,
+  setViewMode,
+  onFullScreenPreview,
+}: ComponentPreviewProps) {
+  const [deploymentDomain, setDeploymentDomain] = useState<string | null>(null)
+
   if (!generatedComponent) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-[#666666] dark:text-[#8b949e]">
@@ -29,16 +39,40 @@ export function ComponentPreview({ generatedComponent, viewMode, setViewMode, on
           <span className="text-sm font-[500] text-[#0f1419] dark:text-[#f0f6fc]">Generated Component</span>
         </div>
         <div className="flex items-center gap-2">
+          {deploymentDomain && (
+            <a
+              href={deploymentDomain}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 hover:text-blue-800 underline"
+            >
+              View Live →
+            </a>
+          )}
+          {onFullScreenPreview && (
+            <Button
+              onClick={onFullScreenPreview}
+              size="sm"
+              variant="outline"
+              className="h-8 px-2 text-xs bg-transparent"
+            >
+              Full Screen
+            </Button>
+          )}
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "preview" | "code")}>
-            <TabsList className="grid w-full grid-cols-2 h-8">
+            <TabsList className="grid w-full grid-cols-3 h-8">
               <TabsTrigger value="preview" className="text-xs font-[450]">
                 Preview
               </TabsTrigger>
               <TabsTrigger value="code" className="text-xs font-[450]">
                 Code
               </TabsTrigger>
-              <TabsTrigger value="code" className="text-xs font-[450]" onClick={onCopyCode}>
-                <Copy className="h-4 w-4" />
+              <TabsTrigger
+                value="deploy"
+                className="text-xs font-[450]"
+                onClick={() => setDeploymentDomain("https://example.com")}
+              >
+                Deploy
               </TabsTrigger>
             </TabsList>
           </Tabs>

@@ -33,7 +33,7 @@ Zerlo is an innovative application that leverages Google's Gemini AI to build yo
 - **Edge-optimized** - Runs on Vercel Edge Runtime for maximum performance
 
 ## 📸 Demo
-🔗 **[Try the Live Demo](https://generative-ui-cyan.vercel.app/)**
+🔗 **[Try the Live Demo](https://www.zerlo.online/)**
 <details>
 <summary>View Screenshots</summary>
 

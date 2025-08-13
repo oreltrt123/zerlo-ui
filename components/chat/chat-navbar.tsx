@@ -1,8 +1,11 @@
 "use client"
-import { Sparkles } from 'lucide-react'
+
 import { Button } from "@/components/ui/button"
 import { DeployModal } from "./deploy-modal"
+import { ShareModal } from "./share-modal"
 import { useState, useEffect } from "react"
+import { Link } from "lucide-react"
+import "@/styles/button.css"
 
 interface ChatNavbarProps {
   chatName: string
@@ -16,6 +19,7 @@ interface ChatNavbarProps {
 
 export function ChatNavbar({ chatName, messages }: ChatNavbarProps) {
   const [showDeployModal, setShowDeployModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Check if there are deployable messages
   const deployableMessages = messages.filter((msg) => msg.component_code && msg.sender === "ai")
@@ -45,30 +49,37 @@ export function ChatNavbar({ chatName, messages }: ChatNavbarProps) {
     setShowDeployModal(true)
   }
 
+  const handleShareClick = () => {
+    setShowShareModal(true)
+  }
+
   return (
     <>
-      {/* Adjusted padding to make it smaller */}
-      <div className="border-b border-[#e6e6e6] dark:border-[#30363d] bg-white dark:bg-[#161b22] py-2 px-4">
+      <div className="bg-white py-2 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-[#f6f6f6] dark:bg-[#21262d] rounded-lg">
-              <Sparkles className="h-4 w-4 text-[#666666] dark:text-[#8b949e]" />
-            </div>
             <div>
               <h2 className="text-[#0f1419] dark:text-[#f0f6fc] font-[600] text-base">{chatName}</h2>
-              <p className="text-[#666666] dark:text-[#8b949e] text-sm font-[450]">
-                Describe the component you want to build or paste data.
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={handleShareClick}
+              variant="outline"
+              className="text-gray-600 hover:text-gray-800 border-gray-300 hover:border-gray-400 bg-transparent"
+            >
+              <Link className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+
             <span className="text-xs text-gray-500">
               {hasDeployableMessages ? `${deployableMessages.length} component(s) ready` : "No components to deploy"}
             </span>
             <Button
               onClick={handleDeployClick}
-              variant={'blueFont'}
+              variant={"default"}
               disabled={!hasDeployableMessages}
+              className="bg-[#0969da] hover:bg-[#0860ca] text-white r2552esf25_252trewt3erblueFontDocs"
             >
               Deploy
             </Button>
@@ -76,6 +87,7 @@ export function ChatNavbar({ chatName, messages }: ChatNavbarProps) {
         </div>
       </div>
       <DeployModal isOpen={showDeployModal} onClose={() => setShowDeployModal(false)} messages={messages} />
+      <ShareModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} />
     </>
   )
 }

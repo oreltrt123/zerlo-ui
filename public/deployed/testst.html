@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>testst</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        }
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+        
+        // Define the component
+        function Component() {
+            ```jsx
+const DataVisualization = () => {
+  const data = "hi"; // The provided data
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>User Input Visualization</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-lg font-semibold">You entered:</p>
+        <p className="text-xl mt-2">{data}</p>
+      </CardContent>
+    </Card>
+  );
+};
+
+DataVisualization;
+```
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Component));
+    </script>
+</body>
+</html>

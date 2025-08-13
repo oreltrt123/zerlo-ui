@@ -145,12 +145,11 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    background: #e6e6e6;
-    border-radius: 3px;
+    background: #E9E9E980;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: #d1d1d1;
+    background: #E9E9E970;
   }
   
   .dark ::-webkit-scrollbar-thumb {

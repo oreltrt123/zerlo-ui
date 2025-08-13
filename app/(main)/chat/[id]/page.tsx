@@ -1,10 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useCompletion } from "ai/react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import { Toaster, toast } from "sonner"
 import type { User } from "@supabase/supabase-js"
@@ -29,7 +27,10 @@ interface Chat {
 
 export default function ChatIdPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const chatId = params.id as string
+  const autoSend = searchParams.get("autoSend") === "true"
+
   const [user, setUser] = useState<User | null>(null)
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -40,7 +41,7 @@ export default function ChatIdPage() {
 
   // Refs for layout and resizing
   const chatPanelRef = useRef<HTMLDivElement>(null)
-  const chatMessagesRef = useRef<HTMLDivElement>(null) // Ref for the scrollable messages container
+  const chatMessagesRef = useRef<HTMLDivElement>(null)
   const [chatMessagesPanelHeight, setChatMessagesPanelHeight] = useState(0)
 
   // Resizing state and handlers
@@ -48,11 +49,10 @@ export default function ChatIdPage() {
   const startY = useRef(0)
   const startHeight = useRef(0)
 
-  const NAVBAR_HEIGHT = 64 // px, approximate height of ChatNavbar
-  const CHAT_INPUT_HEIGHT = 150 // px, approximate height of ChatInput
-  const DIVIDER_HEIGHT = 4 // px, height of the resizer div
+  const NAVBAR_HEIGHT = 64
+  const CHAT_INPUT_HEIGHT = 150
+  const DIVIDER_HEIGHT = 4
 
-  // Moved handleMouseMove and handleMouseUp definitions before handleMouseDown
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return
     const deltaY = e.clientY - startY.current
@@ -60,8 +60,8 @@ export default function ChatIdPage() {
     if (chatPanelRef.current) {
       const totalAvailableHeight =
         chatPanelRef.current.offsetHeight - NAVBAR_HEIGHT - CHAT_INPUT_HEIGHT - DIVIDER_HEIGHT
-      const minHeight = 100 // Minimum height for messages
-      const maxHeight = totalAvailableHeight - 50 // Ensure input area has at least 50px
+      const minHeight = 100
+      const maxHeight = totalAvailableHeight - 50
       newHeight = Math.max(minHeight, Math.min(newHeight, maxHeight))
     }
     setChatMessagesPanelHeight(newHeight)
@@ -73,22 +73,7 @@ export default function ChatIdPage() {
     document.removeEventListener("mouseup", handleMouseUp)
     document.body.style.cursor = ""
     document.body.style.userSelect = ""
-  }, [handleMouseMove]) // Added handleMouseMove to dependencies
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      isResizing.current = true
-      startY.current = e.clientY
-      if (chatMessagesRef.current) {
-        startHeight.current = chatMessagesRef.current.offsetHeight
-      }
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
-      document.body.style.cursor = "ns-resize"
-      document.body.style.userSelect = "none"
-    },
-    [handleMouseMove, handleMouseUp],
-  ) // Added handleMouseMove and handleMouseUp to dependencies
+  }, [handleMouseMove])
 
   const supabase = createClient()
 
@@ -100,12 +85,10 @@ export default function ChatIdPage() {
       setGeneratedComponent(completion)
       toast.success("Component generated successfully!")
       setViewMode("preview")
-      // Save the component code to the last AI message
       if (messageContextRef.current) {
         const { aiMessageId } = messageContextRef.current
         console.log("Saving component code to message:", aiMessageId)
         await saveMessageWithComponent(aiMessageId, completion)
-        // Update the message in state immediately
         setMessages((prev) =>
           prev.map((msg) => (msg.id === aiMessageId ? { ...msg, component_code: completion } : msg)),
         )
@@ -133,10 +116,8 @@ export default function ChatIdPage() {
       if (messageContextRef.current) {
         const { aiMessageId, originalUserPrompt } = messageContextRef.current
         try {
-          // Save AI message and get the real ID
           const realAiMessageId = await saveMessage("ai", completion)
           console.log("AI message saved with ID:", realAiMessageId)
-          // Update the AI message in state with real ID and remove streaming
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === aiMessageId && msg.isStreaming
@@ -144,9 +125,7 @@ export default function ChatIdPage() {
                 : msg,
             ),
           )
-          // Update context with real ID for component saving
           messageContextRef.current = { aiMessageId: realAiMessageId, originalUserPrompt }
-          // Generate component
           completeComponent(originalUserPrompt)
         } catch (error) {
           console.error("Error saving AI message:", error)
@@ -184,12 +163,8 @@ export default function ChatIdPage() {
         component_code: msg.component_code,
       }))
       console.log("Processed messages:", loadedMessages)
-      console.log(
-        "Messages with component_code:",
-        loadedMessages.filter((msg) => msg.component_code),
-      )
       setMessages(loadedMessages)
-      // Set the latest component code if available
+
       const messagesWithComponents = data.filter((msg) => msg.component_code)
       console.log("Messages with components:", messagesWithComponents)
       if (messagesWithComponents.length > 0) {
@@ -206,17 +181,16 @@ export default function ChatIdPage() {
   // Initialize chat
   const initializeChat = useCallback(async () => {
     try {
-      // Get user
       const {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
       setUser(user)
-      // Get chat details
+
       const { data: chatData, error: chatError } = await supabase.from("chats").select("*").eq("id", chatId).single()
       if (chatError) throw chatError
       setChat(chatData)
-      // Load messages
+
       await loadMessages()
     } catch (error) {
       console.error("Error initializing chat:", error)
@@ -225,6 +199,44 @@ export default function ChatIdPage() {
       setLoading(false)
     }
   }, [chatId, supabase, loadMessages])
+
+  useEffect(() => {
+    const handleAutoSend = async () => {
+      if (autoSend && messages.length > 0 && user) {
+        // Find the last user message that doesn't have a corresponding AI response
+        const lastUserMessage = messages.filter((msg) => msg.sender === "user").pop()
+        if (lastUserMessage) {
+          // Check if there's already an AI response to this message
+          const hasAiResponse = messages.some(
+            (msg) => msg.sender === "ai" && messages.indexOf(msg) > messages.indexOf(lastUserMessage),
+          )
+
+          if (!hasAiResponse) {
+            // Auto-send the AI response
+            const tempAiMessageId = `temp-ai-${Date.now()}`
+            const aiMessage: Message = {
+              id: tempAiMessageId,
+              sender: "ai",
+              content: "Thinking...",
+              isStreaming: true,
+            }
+
+            setMessages((prev) => [...prev, aiMessage])
+            messageContextRef.current = {
+              aiMessageId: tempAiMessageId,
+              originalUserPrompt: lastUserMessage.content,
+            }
+
+            await completeChat(lastUserMessage.content)
+          }
+        }
+      }
+    }
+
+    if (!loading && messages.length > 0) {
+      handleAutoSend()
+    }
+  }, [autoSend, messages, loading, user, completeChat])
 
   const saveMessage = async (sender: "user" | "ai", content: string) => {
     try {
@@ -245,9 +257,8 @@ export default function ChatIdPage() {
         throw error
       }
       console.log("Message saved with ID:", data.id)
-      // Update chat's updated_at timestamp
       await supabase.from("chats").update({ updated_at: new Date().toISOString() }).eq("id", chatId)
-      return data.id // Return the generated ID
+      return data.id
     } catch (error) {
       console.error("Error saving message:", error)
       throw error
@@ -287,13 +298,9 @@ export default function ChatIdPage() {
     setInputPrompt("")
     setGeneratedComponent("")
     try {
-      // Save user message and get the real ID
       const userMessageId = await saveMessage("user", currentInput)
-      // Update the message in state with the real ID
       setMessages((prev) => prev.map((msg) => (msg.id === tempUserMessageId ? { ...msg, id: userMessageId } : msg)))
-      // Store context for AI message
       messageContextRef.current = { aiMessageId: tempAiMessageId, originalUserPrompt: currentInput }
-      // Generate AI response
       await completeChat(currentInput)
     } catch (error) {
       console.error("Error in handleSendMessage:", error)
@@ -306,6 +313,12 @@ export default function ChatIdPage() {
       navigator.clipboard.writeText(generatedComponent)
       toast.success("Code copied to clipboard!")
     }
+  }
+
+  const handleRestoreComponent = (componentCode: string) => {
+    setGeneratedComponent(componentCode)
+    setViewMode("preview")
+    toast.success("Component restored!")
   }
 
   const isGenerating = isLoadingChat || isLoadingComponent
@@ -326,14 +339,12 @@ export default function ChatIdPage() {
     }
   }, [chatCompletionText, isLoadingChat])
 
-  // Scroll to bottom of messages
   useEffect(() => {
     if (chatMessagesRef.current) {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight
     }
-  }, [messages, chatMessagesPanelHeight]) // Also scroll if panel height changes
+  }, [messages, chatMessagesPanelHeight])
 
-  // Initialize chatMessagesPanelHeight on mount and when chatPanelRef is available
   useEffect(() => {
     const calculateInitialHeight = () => {
       if (chatPanelRef.current) {
@@ -342,17 +353,14 @@ export default function ChatIdPage() {
         setChatMessagesPanelHeight(initialMessagesHeight)
       }
     }
-    // Use a small timeout to ensure all elements are rendered and measured
     const timeoutId = setTimeout(calculateInitialHeight, 100)
-    // Recalculate on window resize
     window.addEventListener("resize", calculateInitialHeight)
     return () => {
       clearTimeout(timeoutId)
       window.removeEventListener("resize", calculateInitialHeight)
     }
-  }, [loading]) // Depend on loading to ensure initial calculation after data fetch
+  }, [loading])
 
-  // Debug effect to log messages changes
   useEffect(() => {
     console.log("Messages state updated:", messages)
     console.log(
@@ -363,54 +371,50 @@ export default function ChatIdPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
       </div>
     )
   }
 
   if (!user || !chat) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div>Chat not found or access denied</div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-slate-600">Chat not found or access denied</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <Toaster richColors position="top-center" />
       {/* Left Column: Chat Interface */}
-      <div
-        ref={chatPanelRef}
-        className="w-1/2 flex flex-col border-r border-[#e6e6e6] dark:border-[#30363d] bg-white dark:bg-[#161b22]"
-      >
+      <div ref={chatPanelRef} className="w-1/2 flex flex-col border-r border-slate-200 bg-white shadow-lg">
         <ChatNavbar chatName={chat.name} messages={messages} />
         {/* Resizable Chat Messages Area */}
         <div
           ref={chatMessagesRef}
           style={{ height: `${chatMessagesPanelHeight}px` }}
-          className="relative overflow-y-auto flex flex-col gap-4 p-6"
+          className="relative overflow-y-auto flex flex-col gap-4 px-4 py-6"
         >
-          <ChatMessages messages={messages} />
+          <div className="max-w-2xl mx-auto w-full">
+            <ChatMessages messages={messages} onRestoreComponent={handleRestoreComponent} />
+          </div>
         </div>
-        {/* Resizer */}
-        <div
-          onMouseDown={handleMouseDown}
-          className="h-1 bg-gray-200 dark:bg-gray-700 cursor-ns-resize flex items-center justify-center"
-        >
-          <div className="w-8 h-0.5 bg-gray-400 dark:bg-gray-500 rounded-full" />
+
+        <div className="px-4 py-6 bg-white">
+          <div className="max-w-2xl mx-auto">
+            <ChatInput
+              inputPrompt={inputPrompt}
+              setInputPrompt={setInputPrompt}
+              onSendMessage={handleSendMessage}
+              isGenerating={isGenerating}
+            />
+          </div>
         </div>
-        {/* Chat Input */}
-        <ChatInput
-          inputPrompt={inputPrompt}
-          setInputPrompt={setInputPrompt}
-          onSendMessage={handleSendMessage}
-          isGenerating={isGenerating}
-        />
       </div>
       {/* Right Column: Generated Component Preview/Code */}
-      <div className="w-1/2 flex flex-col bg-white dark:bg-[#161b22] overflow-hidden">
+      <div className="w-1/2 flex flex-col bg-white shadow-lg overflow-hidden">
         <ComponentPreview
           generatedComponent={generatedComponent}
           viewMode={viewMode}

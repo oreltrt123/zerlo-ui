@@ -13,8 +13,6 @@ const styles = `
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
-    background-color: #1a1a1a;
-    color: #fff;
     padding: 20px;
   }
   .form-group {
@@ -53,29 +51,21 @@ const styles = `
     right: 0;
     max-height: 200px;
     overflow-y: auto;
-    background-color: #2a2a2a;
-    border: 1px solid #333;
+    background-color: #e9e6e6bd;
+    border: 1px solid #8888881A;
     border-radius: 4px;
     z-index: 10;
     margin-top: 2px;
   }
   .dropdown-item {
     padding: 8px;
-    cursor: pointer;
+    cursor: default;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
   .dropdown-item:hover {
-    background-color: #3a3a3a;
-  }
-  .form-group input {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #333;
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: #8888881A;
   }
   .form-group button {
     padding: 8px 16px;
@@ -109,6 +99,86 @@ const styles = `
   }
 `
 
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    title: "Account Settings",
+    usernameLabel: "Username",
+    phoneLabel: "Phone Number",
+    saveButton: "Save Changes",
+    changePassword: "Change Password",
+    settingsSaved: "Settings saved successfully!",
+    settingsSaveFailed: "Failed to save settings: ",
+    permissionDenied: "Permission denied. Please ensure your account has the correct permissions or contact support.",
+    bucketIssue: "Storage bucket issue. Please try again or contact support.",
+  },
+  fr: {
+    title: "Paramètres du compte",
+    usernameLabel: "Nom d'utilisateur",
+    phoneLabel: "Numéro de téléphone",
+    saveButton: "Enregistrer les modifications",
+    changePassword: "Changer le mot de passe",
+    settingsSaved: "Paramètres enregistrés avec succès !",
+    settingsSaveFailed: "Échec de l'enregistrement des paramètres : ",
+    permissionDenied: "Permission refusée. Veuillez vérifier les permissions de votre compte ou contacter le support.",
+    bucketIssue: "Problème de stockage. Veuillez réessayer ou contacter le support.",
+  },
+  ru: {
+    title: "Настройки аккаунта",
+    usernameLabel: "Имя пользователя",
+    phoneLabel: "Номер телефона",
+    saveButton: "Сохранить изменения",
+    changePassword: "Сменить пароль",
+    settingsSaved: "Настройки успешно сохранены!",
+    settingsSaveFailed: "Ошибка сохранения настроек: ",
+    permissionDenied: "Доступ запрещен. Проверьте права или свяжитесь с поддержкой.",
+    bucketIssue: "Проблема с хранилищем. Попробуйте позже или обратитесь в поддержку.",
+  },
+  hi: {
+    title: "खाता सेटिंग्स",
+    usernameLabel: "उपयोगकर्ता नाम",
+    phoneLabel: "फोन नंबर",
+    saveButton: "परिवर्तन सहेजें",
+    changePassword: "पासवर्ड बदलें",
+    settingsSaved: "सेटिंग्स सफलतापूर्वक सहेजी गईं!",
+    settingsSaveFailed: "सेटिंग्स सहेजने में विफल: ",
+    permissionDenied: "अनुमति अस्वीकृत। कृपया अपने खाते की अनुमतियां जांचें या समर्थन से संपर्क करें।",
+    bucketIssue: "भंडारण समस्या। कृपया पुनः प्रयास करें या सहायता से संपर्क करें।",
+  },
+  zh: {
+    title: "账户设置",
+    usernameLabel: "用户名",
+    phoneLabel: "电话号码",
+    saveButton: "保存更改",
+    changePassword: "更改密码",
+    settingsSaved: "设置保存成功！",
+    settingsSaveFailed: "保存设置失败：",
+    permissionDenied: "权限被拒绝。请检查账户权限或联系支持。",
+    bucketIssue: "存储问题。请重试或联系支持。",
+  },
+  ar: {
+    title: "إعدادات الحساب",
+    usernameLabel: "اسم المستخدم",
+    phoneLabel: "رقم الهاتف",
+    saveButton: "حفظ التغييرات",
+    changePassword: "تغيير كلمة المرور",
+    settingsSaved: "تم حفظ الإعدادات بنجاح!",
+    settingsSaveFailed: "فشل حفظ الإعدادات: ",
+    permissionDenied: "تم رفض الإذن. يرجى التحقق من أذونات حسابك أو الاتصال بالدعم.",
+    bucketIssue: "مشكلة في التخزين. الرجاء المحاولة مرة أخرى أو الاتصال بالدعم.",
+  },
+  he: {
+    title: "הגדרות חשבון",
+    usernameLabel: "שם משתמש",
+    phoneLabel: "מספר טלפון",
+    saveButton: "שמור שינויים",
+    changePassword: "שנה סיסמה",
+    settingsSaved: "ההגדרות נשמרו בהצלחה!",
+    settingsSaveFailed: "שמירת ההגדרות נכשלה: ",
+    permissionDenied: "ההרשאה נדחתה. אנא בדוק את ההרשאות שלך או פנה לתמיכה.",
+    bucketIssue: "בעיה באחסון. נסה שוב או פנה לתמיכה.",
+  },
+}
+
 export default function AccountSettingsPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -116,6 +186,7 @@ export default function AccountSettingsPage() {
   const [phone, setPhone] = useState("")
   const [selectedCountryCode, setSelectedCountryCode] = useState("+1")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [language, setLanguage] = useState("en")
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -126,6 +197,9 @@ export default function AccountSettingsPage() {
       setUser(user)
 
       if (user) {
+        const lang = user.user_metadata?.language || "en"
+        setLanguage(lang)
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('full_name, phone, avatar_url')
@@ -216,15 +290,16 @@ export default function AccountSettingsPage() {
         .from('profiles')
         .upsert({ id: user.id, ...updates })
       if (error) throw error
-      alert("Settings saved successfully!")
+
+      alert(translations[language].settingsSaved)
     } catch (error) {
       console.error("Error saving settings:", error)
       if (error instanceof Error && error.message.includes('row-level security policy')) {
-        alert("Failed to save settings: Permission denied. Please ensure your account has the correct permissions or contact support.")
+        alert(translations[language].settingsSaveFailed + translations[language].permissionDenied)
       } else if (error instanceof Error && error.message.includes('Bucket not found')) {
-        alert("Failed to save settings: Storage bucket issue. Please try again or contact support.")
+        alert(translations[language].settingsSaveFailed + translations[language].bucketIssue)
       } else {
-        alert("Failed to save settings: " + (error as Error).message)
+        alert(translations[language].settingsSaveFailed + (error as Error).message)
       }
     }
   }
@@ -242,12 +317,14 @@ export default function AccountSettingsPage() {
     return null
   }
 
+  const t = translations[language] || translations.en
+
   return (
     <div className="account-settings">
       <style>{styles}</style>
-      <h1 className="text-2xl font-bold mb-4">Account Settings</h1>
+      <h1 className="text-2xl font-bold mb-4">{t.title}</h1>
       <div className="form-group">
-        <label>Username</label>
+        <label>{t.usernameLabel}</label>
         <Input
           type="text"
           value={username}
@@ -255,7 +332,7 @@ export default function AccountSettingsPage() {
         />
       </div>
       <div className="form-group" ref={dropdownRef}>
-        <label>Phone Number</label>
+        <label>{t.phoneLabel}</label>
         <div className="phone-input-container">
           <Input
             type="tel"
@@ -284,9 +361,9 @@ export default function AccountSettingsPage() {
           </div>
         )}
       </div>
-      <button className="save-button" onClick={handleSave}>Save Changes</button>
+      <button className="save-button" onClick={handleSave}>{t.saveButton}</button>
       <button className="form-group button r2552esf25_252trewt3er" onClick={() => router.push("/settings/password")}>
-        Change Password
+        {t.changePassword}
       </button>
     </div>
   )

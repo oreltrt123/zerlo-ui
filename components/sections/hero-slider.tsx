@@ -2,17 +2,142 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/supabase/client";
+import { User } from "@supabase/supabase-js";
+
+// Translations for HeroSlider UI strings by language code
+const translations: Record<string, {
+  heading: string;
+  description: string;
+  linkText: string;
+  placeholder: string;
+  suggestions: string[];
+}> = {
+  en: {
+    heading: "AI Chat Builds a Game",
+    description: "Describe your game idea in chat, and watch AI turn it into a playable experience. Design, code, and test — all in one place.",
+    linkText: "Start building your game &rarr;",
+    placeholder: "Share your game idea — start creating, playing, and publishing!",
+    suggestions: [
+      "Reporting Dashboard",
+      "Gaming Platform",
+      "Onboarding Portal",
+      "Networking App",
+    ],
+  },
+  fr: {
+    heading: "Le chat IA construit un jeu",
+    description: "Décrivez votre idée de jeu dans le chat, et regardez l'IA la transformer en une expérience jouable. Concevez, codez et testez — tout en un seul endroit.",
+    linkText: "Commencez à créer votre jeu &rarr;",
+    placeholder: "Partagez votre idée de jeu — commencez à créer, jouer et publier !",
+    suggestions: [
+      "Tableau de bord de rapports",
+      "Plateforme de jeu",
+      "Portail d'intégration",
+      "Application de réseautage",
+    ],
+  },
+  he: {
+    heading: "צ'אט AI בונה משחק",
+    description: "תאר את רעיון המשחק שלך בצ'אט, וצפה כיצד AI הופך אותו לחוויה שניתן לשחק בה. עצב, קוד ובדוק — הכל במקום אחד.",
+    linkText: "התחל לבנות את המשחק שלך &larr;",
+    placeholder: "שתף את רעיון המשחק שלך — התחל ליצור, לשחק ולפרסם!",
+    suggestions: [
+      "לוח דוחות",
+      "פלטפורמת משחקים",
+      "פורטל קליטה",
+      "אפליקציית רשתות",
+    ],
+  },
+  zh: {
+    heading: "AI聊天构建游戏",
+    description: "在聊天中描述您的游戏创意，观看AI将其转变为可玩的体验。设计、编码和测试 — 一切都在一个地方。",
+    linkText: "开始构建您的游戏 &rarr;",
+    placeholder: "分享您的游戏创意 — 开始创建、玩耍和发布！",
+    suggestions: [
+      "报告仪表板",
+      "游戏平台",
+      "入职门户",
+      "社交网络应用",
+    ],
+  },
+  ar: {
+    heading: "الدردشة بالذكاء الاصطناعي تبني لعبة",
+    description: "صف فكرة لعبتك في الدردشة، وشاهد الذكاء الاصطناعي يحولها إلى تجربة قابلة للعب. صمم، برمج، واختبر — كل ذلك في مكان واحد.",
+    linkText: "ابدأ ببناء لعبتك &larr;",
+    placeholder: "شارك فكرة لعبتك — ابدأ في الإنشاء واللعب والنشر!",
+    suggestions: [
+      "لوحة تقارير",
+      "منصة ألعاب",
+      "بوابة التأهيل",
+      "تطبيق التواصل",
+    ],
+  },
+  ru: {
+    heading: "Чат с ИИ создает игру",
+    description: "Опишите идею игры в чате и наблюдайте, как ИИ превращает ее в игровой опыт. Проектируйте, программируйте и тестируйте — все в одном месте.",
+    linkText: "Начните создавать свою игру &rarr;",
+    placeholder: "Поделитесь идеей игры — начните создавать, играть и публиковать!",
+    suggestions: [
+      "Панель отчетов",
+      "Игровая платформа",
+      "Портал для новичков",
+      "Сетевое приложение",
+    ],
+  },
+  hi: {
+    heading: "AI चैट गेम बनाता है",
+    description: "चैट में अपनी गेम आइडिया का वर्णन करें, और देखें कि AI इसे एक खेलने योग्य अनुभव में कैसे बदलता है। डिज़ाइन करें, कोड करें और टेस्ट करें — सब कुछ एक ही जगह पर।",
+    linkText: "अपना गेम बनाना शुरू करें &rarr;",
+    placeholder: "अपना गेम आइडिया साझा करें — बनाना, खेलना और प्रकाशित करना शुरू करें!",
+    suggestions: [
+      "रिपोर्टिंग डैशबोर्ड",
+      "गेमिंग प्लेटफॉर्म",
+      "ऑनबोर्डिंग पोर्टल",
+      "नेटवर्किंग ऐप",
+    ],
+  },
+};
 
 export default function HeroSlider() {
+  const [, setUser] = useState<User | null>(null);
+  const [language, setLanguage] = useState("en");
   const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const suggestions = [
-    "Reporting Dashboard",
-    "Gaming Platform",
-    "Onboarding Portal",
-    "Networking App",
-  ];
+  const supabase = createClient();
+
+  const getUser = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLanguage("en"); // Fallback to English if no user
+      } else {
+        setUser(user);
+        setLanguage(user.user_metadata?.language || "en");
+      }
+    } catch (error) {
+      console.error("Error getting user:", error);
+      setLanguage("en"); // Fallback to English on error
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    getUser();
+  }, [getUser]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  const currentTexts = translations[language] || translations.en;
 
   return (
     <div className="max-w-[1380px] mx-auto p-4 lg:p-8">
@@ -22,7 +147,7 @@ export default function HeroSlider() {
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.8, ease: "easeOut"}}
+            transition={{ delay: 0.7, duration: 0.8, ease: "easeOut" }}
             className="bg-white rounded-xl p-6"
           >
             <div className="space-y-4">
@@ -30,7 +155,7 @@ export default function HeroSlider() {
                 <textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Share your game idea — start creating, playing, and publishing!"
+                  placeholder={currentTexts.placeholder}
                   className="w-full p-3 border rounded-md text-black placeholder-gray-400 focus:outline-none h-[120px] resize-none"
                 />
                 <Link href="/chat">
@@ -55,7 +180,7 @@ export default function HeroSlider() {
                 </Link>
               </div>
               <div className="flex justify-center gap-2 flex-wrap">
-                {suggestions.map((suggestion) => (
+                {currentTexts.suggestions.map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputValue(suggestion)}
@@ -72,13 +197,13 @@ export default function HeroSlider() {
         {/* Text Section */}
         <div className="w-full lg:w-1/2 p-6 lg:p-10">
           <h2 className="text-4xl font-medium text-gray-900 mb-4">
-            AI Chat Builds a Game
+            {currentTexts.heading}
           </h2>
           <p className="text-gray-600 mb-6">
-            Describe your game idea in chat, and watch AI turn it into a playable experience. Design, code, and test — all in one place.
+            {currentTexts.description}
           </p>
           <Link href="/chat" className="text-[rgb(0,153,255)] hover:underline font-medium">
-            Start building your game &rarr;
+            {currentTexts.linkText}
           </Link>
         </div>
       </div>

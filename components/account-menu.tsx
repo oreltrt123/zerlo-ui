@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
-import { User } from "@supabase/supabase-js"; // Import Supabase User type
+import { User } from "@supabase/supabase-js";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  // DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -15,10 +14,45 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // Import Image from next/image
+import Image from "next/image";
+
+// Translations for AccountMenu UI strings by language code
+const translations: Record<string, {
+  chat: string;
+  logout: string;
+}> = {
+  en: {
+    chat: "Chat",
+    logout: "Log out",
+  },
+  fr: {
+    chat: "Chat",
+    logout: "Se déconnecter",
+  },
+  he: {
+    chat: "צ'אט",
+    logout: "התנתק",
+  },
+  zh: {
+    chat: "聊天",
+    logout: "登出",
+  },
+  ar: {
+    chat: "الدردشة",
+    logout: "تسجيل الخروج",
+  },
+  ru: {
+    chat: "Чат",
+    logout: "Выйти",
+  },
+  hi: {
+    chat: "चैट",
+    logout: "लॉग आउट",
+  },
+};
 
 interface AccountMenuProps {
-  user: User | null; // Use specific type instead of any
+  user: User | null;
 }
 
 export default function AccountMenu({ user }: AccountMenuProps) {
@@ -26,18 +60,20 @@ export default function AccountMenu({ user }: AccountMenuProps) {
   const router = useRouter();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [language, setLanguage] = useState("en");
 
   useEffect(() => {
     async function getProfile() {
       if (!user || !user.id) {
         console.warn("No user or user ID provided.");
+        setLanguage("en"); // Fallback to English
         return;
       }
 
       try {
         const { data, error, status } = await supabase
           .from("profiles")
-          .select("username, avatar_url")
+          .select("username, avatar_url, language")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -45,17 +81,21 @@ export default function AccountMenu({ user }: AccountMenuProps) {
 
         if (error && status !== 406) {
           console.warn("Supabase error:", error.message, "status:", status);
+          setLanguage("en"); // Fallback to English on error
           return;
         }
 
         if (data) {
           setUsername(data.username || null);
           setAvatarUrl(data.avatar_url || null);
+          setLanguage(data.language || user.user_metadata?.language || "en");
         } else {
           console.warn("No profile data found for user.id:", user.id);
+          setLanguage(user.user_metadata?.language || "en");
         }
       } catch (error) {
         console.error("Unexpected error fetching profile:", error);
+        setLanguage("en"); // Fallback to English on error
       }
     }
 
@@ -71,6 +111,8 @@ export default function AccountMenu({ user }: AccountMenuProps) {
       router.refresh();
     }
   };
+
+  const currentTexts = translations[language] || translations.en;
 
   return (
     <DropdownMenu>
@@ -94,22 +136,16 @@ export default function AccountMenu({ user }: AccountMenuProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-36 relative top-[-15px]" align="end" forceMount>
-        {/* <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{username || user?.email || "Guest"}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user?.email || ""}</p>
-          </div>
-        </DropdownMenuLabel> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/chat">
             <UserIcon className="mr-2 h-4 w-4 text-white" />
-            <span>Chat</span>
+            <span>{currentTexts.chat}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4 text-white" />
-          <span>Log out</span>
+          <span>{currentTexts.logout}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

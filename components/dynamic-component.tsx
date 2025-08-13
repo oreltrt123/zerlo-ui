@@ -4,7 +4,6 @@ import * as Babel from "@babel/standalone"
 import * as shadcnUI from "@/components/ui"
 import * as lucide from "lucide-react"
 import * as Recharts from "recharts"
-import * as Phaser from "phaser"
 
 interface DynamicComponentProps {
   componentCode: string
@@ -22,7 +21,6 @@ const DynamicComponent: React.FC<DynamicComponentProps> = ({ componentCode }) =>
       useMemo,
       useCallback: React.useCallback,
       useRef: React.useRef,
-      Phaser,
       ...shadcnUI,
       ...Recharts,
       ChevronDown: lucide.ChevronDown,
@@ -84,6 +82,7 @@ const DynamicComponent: React.FC<DynamicComponentProps> = ({ componentCode }) =>
       Music: lucide.Music,
       PlusIcon: lucide.Plus,
       MinusIcon: lucide.Minus,
+      ThumbsUp: lucide.ThumbsUp,
     }),
     [],
   )
