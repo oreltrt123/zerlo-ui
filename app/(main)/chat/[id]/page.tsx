@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useCompletion } from "ai/react"
-import { useParams, useSearchParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import { Toaster, toast } from "sonner"
 import type { User } from "@supabase/supabase-js"
@@ -27,9 +27,8 @@ interface Chat {
 
 export default function ChatIdPage() {
   const params = useParams()
-  const searchParams = useSearchParams()
+  const router = useRouter()
   const chatId = params.id as string
-  const autoSend = searchParams.get("autoSend") === "true"
 
   const [user, setUser] = useState<User | null>(null)
   const [chat, setChat] = useState<Chat | null>(null)
@@ -38,6 +37,8 @@ export default function ChatIdPage() {
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview")
   const [loading, setLoading] = useState(true)
+  const [isComponentVisible, setIsComponentVisible] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   // Refs for layout and resizing
   const chatPanelRef = useRef<HTMLDivElement>(null)
@@ -77,12 +78,26 @@ export default function ChatIdPage() {
 
   const supabase = createClient()
 
+  const handleCloseComponent = useCallback(() => {
+    setIsAnimating(true)
+    setTimeout(() => {
+      setIsComponentVisible(false)
+      setGeneratedComponent("")
+      setIsAnimating(false)
+    }, 300)
+  }, [])
+
   // Hook for generating the actual component code
   const { complete: completeComponent, isLoading: isLoadingComponent } = useCompletion({
     api: "/api/generate",
     onFinish: async (prompt, completion) => {
       console.log("Component generation finished:", completion)
       setGeneratedComponent(completion)
+      setIsAnimating(true)
+      setTimeout(() => {
+        setIsComponentVisible(true)
+        setIsAnimating(false)
+      }, 100)
       toast.success("Component generated successfully!")
       setViewMode("preview")
       if (messageContextRef.current) {
@@ -171,6 +186,7 @@ export default function ChatIdPage() {
         const lastMessageWithComponent = messagesWithComponents[messagesWithComponents.length - 1]
         console.log("Setting latest component:", lastMessageWithComponent.component_code)
         setGeneratedComponent(lastMessageWithComponent.component_code)
+        setIsComponentVisible(true)
       }
     } catch (error) {
       console.error("Error loading messages:", error)
@@ -184,7 +200,12 @@ export default function ChatIdPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user) return
+
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
       setUser(user)
 
       const { data: chatData, error: chatError } = await supabase.from("chats").select("*").eq("id", chatId).single()
@@ -198,45 +219,7 @@ export default function ChatIdPage() {
     } finally {
       setLoading(false)
     }
-  }, [chatId, supabase, loadMessages])
-
-  useEffect(() => {
-    const handleAutoSend = async () => {
-      if (autoSend && messages.length > 0 && user) {
-        // Find the last user message that doesn't have a corresponding AI response
-        const lastUserMessage = messages.filter((msg) => msg.sender === "user").pop()
-        if (lastUserMessage) {
-          // Check if there's already an AI response to this message
-          const hasAiResponse = messages.some(
-            (msg) => msg.sender === "ai" && messages.indexOf(msg) > messages.indexOf(lastUserMessage),
-          )
-
-          if (!hasAiResponse) {
-            // Auto-send the AI response
-            const tempAiMessageId = `temp-ai-${Date.now()}`
-            const aiMessage: Message = {
-              id: tempAiMessageId,
-              sender: "ai",
-              content: "Thinking...",
-              isStreaming: true,
-            }
-
-            setMessages((prev) => [...prev, aiMessage])
-            messageContextRef.current = {
-              aiMessageId: tempAiMessageId,
-              originalUserPrompt: lastUserMessage.content,
-            }
-
-            await completeChat(lastUserMessage.content)
-          }
-        }
-      }
-    }
-
-    if (!loading && messages.length > 0) {
-      handleAutoSend()
-    }
-  }, [autoSend, messages, loading, user, completeChat])
+  }, [chatId, supabase, loadMessages, router])
 
   const saveMessage = async (sender: "user" | "ai", content: string) => {
     try {
@@ -284,11 +267,42 @@ export default function ChatIdPage() {
     }
   }
 
+  const checkMessageLimit = async () => {
+    if (!user) return false
+
+    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+    if (profile.plan === "premium") return true
+
+    const now = new Date()
+    const lastReset = new Date(profile.last_message_reset)
+    const hoursSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60)
+
+    if (hoursSinceReset >= 24) {
+      await supabase
+        .from("profiles")
+        .update({ message_count: 0, last_message_reset: now.toISOString() })
+        .eq("id", user.id)
+      return true
+    }
+
+    if (profile.message_count >= 10) {
+      toast.error("Daily message limit reached. Upgrade to premium for unlimited.")
+      return false
+    }
+
+    await supabase
+      .from("profiles")
+      .update({ message_count: profile.message_count + 1 })
+      .eq("id", user.id)
+    return true
+  }
+
   const handleSendMessage = async () => {
     if (!inputPrompt.trim()) {
       toast.warning("Please enter a message.")
       return
     }
+    if (!(await checkMessageLimit())) return
     const tempUserMessageId = `temp-user-${Date.now()}`
     const tempAiMessageId = `temp-ai-${Date.now() + 1}`
     const currentInput = inputPrompt
@@ -296,7 +310,6 @@ export default function ChatIdPage() {
     const aiMessage: Message = { id: tempAiMessageId, sender: "ai", content: "Thinking...", isStreaming: true }
     setMessages((prev) => [...prev, userMessage, aiMessage])
     setInputPrompt("")
-    setGeneratedComponent("")
     try {
       const userMessageId = await saveMessage("user", currentInput)
       setMessages((prev) => prev.map((msg) => (msg.id === tempUserMessageId ? { ...msg, id: userMessageId } : msg)))
@@ -308,24 +321,22 @@ export default function ChatIdPage() {
     }
   }
 
-  const handleCopyCode = () => {
-    if (generatedComponent) {
-      navigator.clipboard.writeText(generatedComponent)
-      toast.success("Code copied to clipboard!")
-    }
-  }
+  // const handleCopyCode = () => {
+  //   if (generatedComponent) {
+  //     navigator.clipboard.writeText(generatedComponent)
+  //     toast.success("Code copied to clipboard!")
+  //   }
+  // }
 
   const handleRestoreComponent = (componentCode: string) => {
     setGeneratedComponent(componentCode)
+    setIsComponentVisible(true)
     setViewMode("preview")
     toast.success("Component restored!")
   }
 
-  const isGenerating = isLoadingChat || isLoadingComponent
 
-  useEffect(() => {
-    initializeChat()
-  }, [initializeChat])
+  const isGenerating = isLoadingChat || isLoadingComponent
 
   useEffect(() => {
     if (isLoadingChat && chatCompletionText) {
@@ -369,6 +380,10 @@ export default function ChatIdPage() {
     )
   }, [messages])
 
+  useEffect(() => {
+    initializeChat()
+  }, [initializeChat])
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
@@ -386,42 +401,78 @@ export default function ChatIdPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex h-screen bg-background">
       <Toaster richColors position="top-center" />
-      {/* Left Column: Chat Interface */}
-      <div ref={chatPanelRef} className="w-1/2 flex flex-col border-r border-slate-200 bg-white shadow-lg">
-        <ChatNavbar chatName={chat.name} messages={messages} />
-        {/* Resizable Chat Messages Area */}
-        <div
-          ref={chatMessagesRef}
-          style={{ height: `${chatMessagesPanelHeight}px` }}
-          className="relative overflow-y-auto flex flex-col gap-4 px-4 py-6"
-        >
-          <div className="max-w-2xl mx-auto w-full">
-            <ChatMessages messages={messages} onRestoreComponent={handleRestoreComponent} />
-          </div>
-        </div>
 
-        <div className="px-4 py-6 bg-white">
-          <div className="max-w-2xl mx-auto">
-            <ChatInput
-              inputPrompt={inputPrompt}
-              setInputPrompt={setInputPrompt}
-              onSendMessage={handleSendMessage}
-              isGenerating={isGenerating}
-            />
+      <div
+        className={`flex transition-all duration-300 ease-in-out ${
+          isComponentVisible && !isAnimating ? "w-1/2" : "w-full justify-center"
+        }`}
+      >
+        {/* Chat Interface */}
+        <div
+          ref={chatPanelRef}
+          className={`flex flex-col bg-background transition-all duration-300 ease-in-out ${
+            isComponentVisible && !isAnimating ? "w-full" : "w-full max-w-4xl"
+          }`}
+        >
+          <ChatNavbar
+            chatName={chat.name}
+            messages={messages}
+            user={user}
+            showLogin={() => router.push("/login")}
+            signOut={async () => {
+              await supabase.auth.signOut()
+              router.push("/login")
+            }}
+            onSocialClick={(target: "github" | "x" | "discord") => {
+              const urls = {
+                github: "https://github.com/oreltrt123",
+                discord: "https://discord.com/invite/zerlo",
+                x: "https://x.com/zerlo_online",
+              }
+              window.open(urls[target], "_blank")
+            }}
+          />
+
+          {/* Resizable Chat Messages Area */}
+          <div
+            ref={chatMessagesRef}
+            style={{ height: `${chatMessagesPanelHeight}px` }}
+            className="relative overflow-y-auto flex flex-col gap-4 px-4 py-6"
+          >
+            <div className="max-w-2xl mx-auto w-full">
+              <ChatMessages messages={messages} onRestoreComponent={handleRestoreComponent} />
+            </div>
+          </div>
+
+          <div className="px-4 py-6 bg-background">
+            <div className="max-w-2xl mx-auto">
+              <ChatInput
+                inputPrompt={inputPrompt}
+                setInputPrompt={setInputPrompt}
+                onSendMessage={handleSendMessage}
+                isGenerating={isGenerating}
+              />
+            </div>
           </div>
         </div>
       </div>
-      {/* Right Column: Generated Component Preview/Code */}
-      <div className="w-1/2 flex flex-col bg-white shadow-lg overflow-hidden">
-        <ComponentPreview
-          generatedComponent={generatedComponent}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          onCopyCode={handleCopyCode}
-        />
-      </div>
+
+      {isComponentVisible && (
+        <div
+          className={`w-1/2 flex flex-col bg-background overflow-hidden transition-all duration-300 ease-in-out ${
+            isAnimating ? "opacity-0 translate-x-full" : "opacity-100 translate-x-0"
+          }`}
+        >
+          <ComponentPreview
+            generatedComponent={generatedComponent}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            onCloseComponent={handleCloseComponent}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -134,7 +134,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                 <>
                 <div
                   className={`p-3 rounded-lg ${
-                    msg.sender === "user" ? "bg-[#E9E9E980] text-[#0d0d0ddc]" : "bg-white text-[#0d0d0db6]"
+                    msg.sender === "user" ? "bg-[#E9E9E980] dark:bg-[#8888881A] text-[#0d0d0ddc] dark:text-white" : "bg-background text-[#0d0d0db6] dark:text-white"
                     }`}
                   >
                     {msg.content}

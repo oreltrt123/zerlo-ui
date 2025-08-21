@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>orl</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        }
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+        
+        // Define the component
+        function Component() {
+            ```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Pixel Adventures</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #87CEEB; /* Sky blue background */
+            font-family: 'Press Start 2P', cursive; /* Pixelated font */
+            color: white;
+            text-shadow: 2px 2px #000;
+        }
+        canvas {
+            border: 5px solid #333;
+            background-color: #000; /* Black background for the game canvas */
+        }
+        #game-container {
+            position: relative;
+        }
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2em;
+            z-index: 10;
+        }
+        #hud span {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        #game-over-screen, #level-complete-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            font-size: 2em;
+            text-align: center;
+        }
+        #game-over-screen button, #level-complete-screen button {
+            font-size: 1em;
+            padding: 15px 30px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-shadow: none;
+        }
+        #game-over-screen button:hover, #level-complete-screen button:hover {
+            background-color: #45a049;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="hud">
+            <span id="score">Score: 0</span>
+            <span id="lives">Lives: 3</span>
+            <span id="powerup">Powerup: None</span>
+            <span id="timer">Time: 300</span>
+        </div>
+        <div id="level-complete-screen">
+            <h2>Level Complete!</h2>
+            <p id="final-score">Score: 0</p>
+            <button onclick="restartLevel()">Next Level</button>
+            <button onclick="restartGame()">Restart Game</button>
+        </div>
+        <div id="game-over-screen">
+            <h2>Game Over!</h2>
+            <p id="final-score-go">Score: 0</p>
+            <button onclick="restartGame()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game settings
+        const GAME_WIDTH = 800;
+        const GAME_HEIGHT = 600;
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+
+        // Game state variables
+        let score = 0;
+        let lives = 3;
+        let timer = 300; // seconds
+        let gameOver = false;
+        let levelComplete = false;
+        let currentLevel = 1;
+        let gamePaused = false;
+
+        // Player properties
+        const PLAYER_WIDTH = 40;
+        const PLAYER_HEIGHT = 60;
+        const PLAYER_SPEED = 5;
+        const JUMP_VELOCITY = -15;
+        const GRAVITY = 0.8;
+        const MAX_FALL_SPEED = 10;
+
+        let player = {
+            x: 50,
+            y: GAME_HEIGHT - 100,
+            width: PLAYER_WIDTH,
+            height: PLAYER_HEIGHT,
+            color: 'blue',
+            velocityX: 0,
+            velocityY: 0,
+            isJumping: false,
+            isGrounded: false,
+            powerup: 'none', // 'none', 'big', 'star'
+            invincibleTimer: 0
+        };
+
+        // Platform properties
+        const PLATFORM_HEIGHT = 30;
+        const platforms = [];
+
+        // Enemy properties
+        const ENEMY_WIDTH = 40;
+        const ENEMY_HEIGHT = 40;
+        const enemies = [];
+
+        // Collectible properties
+        const COIN_SIZE = 20;
+        const coins = [];
+        const powerups = []; // e.g., mushrooms, stars
+
+        // Input handling
+        const keys = {
+            left: false,
+            right: false,
+            jump: false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (gameOver || levelComplete || gamePaused) return;
+            switch (e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                    keys.left = true;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    keys.right = true;
+                    break;
+                case ' ':
+                case 'w':
+                case 'ArrowUp':
+                    keys.jump = true;
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                    keys.left = false;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    keys.right = false;
+                    break;
+                case ' ':
+                case 'w':
+                case 'ArrowUp':
+                    keys.jump = false;
+                    break;
+                case 'p': // Pause key
+                    gamePaused = !gamePaused;
+                    break;
+            }
+        });
+
+        // Game objects
+        class GameObject {
+            constructor(x, y, width, height, color) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+            }
+
+            draw(context) {
+                context.fillStyle = this.color;
+                context.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        class Platform extends GameObject {
+            constructor(x, y, width, height, color = 'green') {
+                super(x, y, width, height, color);
+            }
+        }
+
+        class Enemy extends GameObject {
+            constructor(x, y, width, height, color = 'red', type = 'walker') {
+                super(x, y, width, height, color);
+                this.type = type;
+                this.speed = 1;
+                this.direction = 1; // 1 for right, -1 for left
+                this.isAlive = true;
+            }
+
+            update() {
+                if (!this.isAlive) return;
+
+                if (this.type === 'walker') {
+                    this.x += this.speed * this.direction;
+                    // Simple boundary check for walking enemies
+                    if (this.x < 0 || this.x > GAME_WIDTH - this.width) {
+                        this.direction *= -1;
+                    }
+                } else if (this.type === 'flyer') {
+                    // Simple up and down movement for flyers
+                    this.y += this.speed * this.direction;
+                    if (this.y < 100 || this.y > GAME_HEIGHT - this.height - 100) {
+                        this.direction *= -1;
+                    }
+                }
+            }
+
+            draw(context) {
+                if (this.isAlive) {
+                    context.fillStyle = this.color;
+                    context.fillRect(this.x, this.y, this.width, this.height);
+                    // Add a simple visual indicator for enemy type
+                    context.fillStyle = 'black';
+                    context.font = '10px Arial';
+                    context.fillText(this.type.charAt(0).toUpperCase(), this.x + this.width / 2 - 5, this.y + this.height / 2 + 5);
+                }
+            }
+        }
+
+        class Coin extends GameObject {
+            constructor(x, y, size = COIN_SIZE, color = 'gold') {
+                super(x, y, size, size, color);
+                this.collected = false;
+            }
+
+            draw(context) {
+                if (!this.collected) {
+                    context.fillStyle = this.color;
+                    context.beginPath();
+                    context.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
+                    context.fill();
+                }
+            }
+        }
+
+        class Powerup extends GameObject {
+            constructor(x, y, size = COIN_SIZE, type = 'mushroom') {
+                super(x, y, size, size, type === 'mushroom' ? 'red' : 'yellow');
+                this.type = type; // 'mushroom', 'star'
+                this.collected = false;
+            }
+
+            draw(context) {
+                if (!this.collected) {
+                    context.fillStyle = this.color;
+                    context.fillRect(this.x, this.y, this.width, this.height);
+                    context.fillStyle = 'white';
+                    context.font = '10px Arial';
+                    context.fillText(this.type.charAt(0).toUpperCase(), this.x + this.width / 2 - 5, this.y + this.height / 2 + 5);
+                }
+            }
+        }
+
+        // Level data (simple example for Level 1)
+        function loadLevel(levelNum) {
+            platforms.length = 0;
+            enemies.length = 0;
+            coins.length = 0;
+            powerups.length = 0;
+
+            // Ground
+            platforms.push(new Platform(0, GAME_HEIGHT - PLATFORM_HEIGHT, GAME_WIDTH, PLATFORM_HEIGHT));
+
+            if (levelNum === 1) {
+                // Level 1 platforms
+                platforms.push(new Platform(100, GAME_HEIGHT - 150, 200, PLATFORM_HEIGHT));
+                platforms.push(new Platform(350, GAME_HEIGHT - 250, 150, PLATFORM_HEIGHT));
+                platforms.push(new Platform(550, GAME_HEIGHT - 350, 200, PLATFORM_HEIGHT));
+                platforms.push(new Platform(700, GAME_HEIGHT - 100, 100, PLATFORM_HEIGHT)); // End platform
+
+                // Level 1 enemies
+                enemies.push(new Enemy(150, GAME_HEIGHT - PLATFORM_HEIGHT - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'red', 'walker'));
+                enemies.push(new Enemy(400, GAME_HEIGHT - 150 - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'red', 'walker'));
+                enemies.push(new Enemy(600, GAME_HEIGHT - 350 - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'blue', 'flyer'));
+
+                // Level 1 coins
+                for (let i = 0; i < 5; i++) {
+                    coins.push(new Coin(120 + i * 40, GAME_HEIGHT - 200));
+                }
+                coins.push(new Coin(400, GAME_HEIGHT - 300));
+                coins.push(new Coin(600, GAME_HEIGHT - 400));
+
+                // Level 1 powerups
+                powerups.push(new Powerup(380, GAME_HEIGHT - 150 - ENEMY_HEIGHT, COIN_SIZE, 'mushroom'));
+                powerups.push(new Powerup(600, GAME_HEIGHT - 400, COIN_SIZE, 'star'));
+
+                // Set player start position for the level
+                player.x = 50;
+                player.y = GAME_HEIGHT - 100;
+                player.powerup = 'none';
+                player.width = PLAYER_WIDTH;
+                player.height = PLAYER_HEIGHT;
+                player.velocityY = 0;
+                player.isJumping = false;
+                player.isGrounded = false;
+            } else if (levelNum === 2) {
+                // Placeholder for Level 2
+                platforms.push(new Platform(0, GAME_HEIGHT - 100, 150, PLATFORM_HEIGHT));
+                platforms.push(new Platform(150, GAME_HEIGHT - 200, 150, PLATFORM_HEIGHT));
+                platforms.push(new Platform(300, GAME_HEIGHT - 300, 150, PLATFORM_HEIGHT));
+                platforms.push(new Platform(450, GAME_HEIGHT - 400, 150, PLATFORM_HEIGHT));
+                platforms.push(new Platform(600, GAME_HEIGHT - 500, 200, PLATFORM_HEIGHT));
+                platforms.push(new Platform(700, GAME_HEIGHT - 100, 100, PLATFORM_HEIGHT)); // End platform
+
+                enemies.push(new Enemy(200, GAME_HEIGHT - 100 - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'red', 'walker'));
+                enemies.push(new Enemy(350, GAME_HEIGHT - 200 - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'blue', 'flyer'));
+                enemies.push(new Enemy(500, GAME_HEIGHT - 300 - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'red', 'walker'));
+                enemies.push(new Enemy(750, GAME_HEIGHT - 100 - ENEMY_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 'red', 'walker'));
+
+                for (let i = 0; i < 3; i++) {
+                    coins.push(new Coin(100 + i * 50, GAME_HEIGHT - 150));
+                }
+                for (let i = 0; i < 2; i++) {
+                    coins.push(new Coin(300 + i * 50, GAME_HEIGHT - 250));
+                }
+                coins.push(new Coin(450, GAME_HEIGHT - 350));
+                coins.push(new Coin(650, GAME_HEIGHT - 450));
+
+                powerups.push(new Powerup(250, GAME_HEIGHT - 200 - ENEMY_HEIGHT, COIN_SIZE, 'star'));
+                powerups.push(new Powerup(500, GAME_HEIGHT - 300 - ENEMY_HEIGHT, COIN_SIZE, 'mushroom'));
+
+                player.x = 50;
+                player.y = GAME_HEIGHT - 100;
+                player.powerup = 'none';
+                player.width = PLAYER_WIDTH;
+                player.height = PLAYER_HEIGHT;
+                player.velocityY = 0;
+                player.isJumping = false;
+                player.isGrounded = false;
+            }
+            // Add more levels here...
+        }
+
+        // Collision detection
+        function checkPlatformCollision(obj) {
+            for (const platform of platforms) {
+                if (obj.y + obj.height <= platform.y &&
+                    obj.y + obj.height + obj.velocityY >= platform.y &&
+                    obj.x < platform.x + platform.width &&
+                    obj.x + obj.width > platform.x) {
+                    // Landing on a platform
+                    if (obj.velocityY > 0) {
+                        obj.y = platform.y - obj.height;
+                        obj.velocityY = 0;
+                        obj.isGrounded = true;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function checkEnemyCollision(player, enemy) {
+            if (!enemy.isAlive) return false;
+
+            // Check for overlap
+            if (player.x < enemy.x + enemy.width &&
+                player.x + player.width > enemy.x &&
+                player.y < enemy.y + enemy.height &&
+                player.y + player.height > enemy.y) {
+
+                // Player jumped on top of the enemy
+                if (player.velocityY > 0 && player.y + player.height <= enemy.y + 5) {
+                    enemy.isAlive = false;
+                    player.velocityY = JUMP_VELOCITY * 0.7; // Small bounce
+                    score += 100;
+                    return false; // Player is safe
+                } else {
+                    // Player hit by enemy
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkCoinCollision(player, coin) {
+            if (coin.collected) return false;
+            return player.x < coin.x + coin.width &&
+                   player.x + player.width > coin.x &&
+                   player.y < coin.y + coin.height &&
+                   player.y + player.height > coin.y;
+        }
+
+        function checkPowerupCollision(player, powerup) {
+            if (powerup.collected) return false;
+            return player.x < powerup.x + powerup.width &&
+                   player.x + player.width > powerup.x &&
+                   player.y < powerup.y + powerup.height &&
+                   player.y + player.height > powerup.y;
+        }
+
+        // Game logic update
+        function update() {
+            if (gameOver || levelComplete || gamePaused) return;
+
+            // Timer
+            timer--;
+            if (timer <= 0) {
+                handleGameOver();
+                return;
+            }
+
+            // Player movement
+            player.isGrounded = checkPlatformCollision(player);
+
+            if (keys.left) {
+                player.velocityX = -PLAYER_SPEED;
+            } else if (keys.right) {
+                player.velocityX = PLAYER_SPEED;
+            } else {
+                player.velocityX = 0;
+            }
+
+            // Jumping
+            if (keys.jump && player.isGrounded) {
+                player.velocityY = JUMP_VELOCITY;
+                player.isJumping = true;
+                player.isGrounded = false;
+            }
+
+            // Apply gravity
+            if (!player.isGrounded) {
+                player.velocityY += GRAVITY;
+                if (player.velocityY > MAX_FALL_SPEED) {
+                    player.velocityY = MAX_FALL_SPEED;
+                }
+            }
+
+            // Update player position
+            player.x += player.velocityX;
+            player.y += player.velocityY;
+
+            // Keep player within screen bounds (horizontal)
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > GAME_WIDTH) player.x = GAME_WIDTH - player.width;
+
+            // Player falls off screen
+            if (player.y > GAME_HEIGHT) {
+                handlePlayerDeath();
+                return;
+            }
+
+            // Powerup invincibility timer
+            if (player.powerup === 'star') {
+                player.invincibleTimer--;
+                if (player.invincibleTimer <= 0) {
+                    player.powerup = 'none';
+                    player.color = 'blue'; // Reset color
+                }
+            }
+
+            // Update enemies
+            for (const enemy of enemies) {
+                enemy.update();
+                if (checkEnemyCollision(player, enemy)) {
+                    handlePlayerDeath();
+                    return;
+                }
+            }
+
+            // Collect coins
+            for (const coin of coins) {
+                if (checkCoinCollision(player, coin)) {
+                    coin.collected = true;
+                    score += 10;
+                    // Play coin sound effect here
+                }
+            }
+
+            // Collect powerups
+            for (const powerup of powerups) {
+                if (checkPowerupCollision(player, powerup)) {
+                    powerup.collected = true;
+                    if (powerup.type === 'mushroom') {
+                        player.powerup = 'big'; // Placeholder for growing
+                        player.width *= 1.2;
+                        player.height *= 1.2;
+                        player.y -= player.height * 0.2; // Adjust position
+                        player.color = 'lightblue';
+                    } else if (powerup.type === 'star') {
+                        player.powerup = 'star';
+                        player.invincibleTimer = 500; // 5 seconds
+                        player.color = 'yellow';
+                    }
+                    // Play powerup sound effect here
+                }
+            }
+
+            // Check for reaching the end of the level
+            const endPlatform = platforms[platforms.length - 1]; // Assuming last platform is the end
+            if (player.x + player.width > endPlatform.x &&
+                player.x < endPlatform.x + endPlatform.width &&
+                player.y + player.height >= endPlatform.y &&
+                currentLevel < 2) { // Simple check for level 1 end
+                levelComplete = true;
+                document.getElementById('level-complete-screen').style.display = 'flex';
+                document.getElementById('final-score').innerText = `Score: ${score}`;
+            } else if (player.x + player.width > endPlatform.x &&
+                       player.x < endPlatform.x + endPlatform.width &&
+                       player.y + player.height >= endPlatform.y &&
+                       currentLevel === 2) { // Simple check for level 2 end
+                // This would be the final boss or end screen
+                alert("Congratulations! You beat the game!");
+                restartGame(); // Or go to a final victory screen
+            }
+        }
+
+        // Drawing
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // Draw background (simple sky and ground)
+            ctx.fillStyle = '#87CEEB'; // Sky blue
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            ctx.fillStyle = '#556B2F'; // Dark olive green for ground
+            ctx.fillRect(0, GAME_HEIGHT - PLATFORM_HEIGHT, GAME_WIDTH, PLATFORM_HEIGHT);
+
+            // Draw platforms
+            ctx.fillStyle = '#A0522D'; // Sienna brown for platforms
+            for (const platform of platforms) {
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            }
+
+            // Draw coins
+            for (const coin of coins) {
+                coin.draw(ctx);
+            }
+
+            // Draw powerups
+            for (const powerup of powerups) {
+                powerup.draw(ctx);
+            }
+
+            // Draw enemies
+            for (const enemy of enemies) {
+                enemy.draw(ctx);
+            }
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw HUD
+            document.getElementById('score').innerText = `Score: ${score}`;
+            document.getElementById('lives').innerText = `Lives: ${lives}`;
+            document.getElementById('powerup').innerText = `Powerup: ${player.powerup === 'none' ? 'None' : player.powerup.charAt(0).toUpperCase() + player.powerup.slice(1)}`;
+            document.getElementById('timer').innerText = `Time: ${Math.max(0, timer)}`;
+
+            // Draw pause indicator
+            if (gamePaused) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+                ctx.fillStyle = 'white';
+                ctx.font = '30px Press Start 2P';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gamePaused) {
+                update();
+            }
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game over and level complete handlers
+        function handlePlayerDeath() {
+            lives--;
+            if (lives <= 0) {
+                handleGameOver();
+            } else {
+                // Reset player position and state for the current level
+                player.x = 50;
+                player.y = GAME_HEIGHT - 100;
+                player.velocityY = 0;
+                player.isJumping = false;
+                player.isGrounded = false;
+                player.powerup = 'none';
+                player.width = PLAYER_WIDTH;
+                player.height = PLAYER_HEIGHT;
+                player.color = 'blue';
+                // Reset enemies and collectibles for the current level
+                loadLevel(currentLevel);
+            }
+        }
+
+        function handleGameOver() {
+            gameOver = true;
+            document.getElementById('game-over-screen').style.display = 'flex';
+            document.getElementById('final-score-go').innerText = `Final Score: ${score}`;
+        }
+
+        function restartLevel() {
+            levelComplete = false;
+            document.getElementById('level-complete-screen').style.display = 'none';
+            currentLevel++; // Move to the next level
+            if (currentLevel > 2) { // Assuming 2 levels for now
+                alert("You beat all levels!");
+                restartGame();
+                return;
+            }
+            loadLevel(currentLevel);
+            resetTimer();
+        }
+
+        function restartGame() {
+            gameOver = false;
+            levelComplete = false;
+            score = 0;
+            lives = 3;
+            currentLevel = 1;
+            gamePaused = false;
+            document.getElementById('game-over-screen').style.display = 'none';
+            document.getElementById('level-complete-screen').style.display = 'none';
+            loadLevel(currentLevel);
+            resetTimer();
+            gameLoop(); // Ensure the loop is running
+        }
+
+        function resetTimer() {
+            timer = 300;
+        }
+
+        // Initial setup
+        loadLevel(currentLevel);
+        gameLoop();
+    </script>
+</body>
+</html>
+```
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Component));
+    </script>
+</body>
+</html>
