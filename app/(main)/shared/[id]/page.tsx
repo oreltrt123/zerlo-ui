@@ -100,12 +100,12 @@ export default function SharedChatPage() {
     setViewMode("preview")
   }
 
-  const handleCopyCode = () => {
-    if (generatedComponent && chat?.allow_copy) {
-      navigator.clipboard.writeText(generatedComponent)
-      // Could add toast here if available
-    }
-  }
+  // const handleCopyCode = () => {
+  //   if (generatedComponent && chat?.allow_copy) {
+  //     navigator.clipboard.writeText(generatedComponent)
+  //     // Could add toast here if available
+  //   }
+  // }
 
   if (loading) {
     return (
@@ -185,7 +185,6 @@ export default function SharedChatPage() {
             generatedComponent={generatedComponent}
             viewMode={viewMode}
             setViewMode={setViewMode}
-            onCopyCode={handleCopyCode}
           />
         </div>
       </div>
