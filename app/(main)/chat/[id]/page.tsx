@@ -267,42 +267,11 @@ export default function ChatIdPage() {
     }
   }
 
-  const checkMessageLimit = async () => {
-    if (!user) return false
-
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-    if (profile.plan === "premium") return true
-
-    const now = new Date()
-    const lastReset = new Date(profile.last_message_reset)
-    const hoursSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60)
-
-    if (hoursSinceReset >= 24) {
-      await supabase
-        .from("profiles")
-        .update({ message_count: 0, last_message_reset: now.toISOString() })
-        .eq("id", user.id)
-      return true
-    }
-
-    if (profile.message_count >= 10) {
-      toast.error("Daily message limit reached. Upgrade to premium for unlimited.")
-      return false
-    }
-
-    await supabase
-      .from("profiles")
-      .update({ message_count: profile.message_count + 1 })
-      .eq("id", user.id)
-    return true
-  }
-
   const handleSendMessage = async () => {
     if (!inputPrompt.trim()) {
       toast.warning("Please enter a message.")
       return
     }
-    if (!(await checkMessageLimit())) return
     const tempUserMessageId = `temp-user-${Date.now()}`
     const tempAiMessageId = `temp-ai-${Date.now() + 1}`
     const currentInput = inputPrompt
