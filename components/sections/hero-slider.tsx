@@ -15,8 +15,8 @@ const translations: Record<string, {
   suggestions: string[];
 }> = {
   en: {
-    heading: "AI Chat Builds a Game",
-    description: "Describe your game idea in chat, and watch AI turn it into a playable experience. Design, code, and test — all in one place.",
+    heading: "The AI ​​chat that creates the magic",
+    description: "Describe the game you want to build and the elements and start publishing.",
     linkText: "Start building your game &rarr;",
     placeholder: "Share your game idea — start creating, playing, and publishing!",
     suggestions: [

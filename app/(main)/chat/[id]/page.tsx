@@ -10,13 +10,16 @@ import { ChatNavbar } from "@/components/chat/chat-navbar"
 import { ChatMessages } from "@/components/chat/chat-messages"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ComponentPreview } from "@/components/chat/component-preview"
+import { handleRestoreComponent } from "@/components/chat/chat-messages"
 
 interface Message {
   id: string
   sender: "user" | "ai"
   content: string
   component_code?: string
+  component_title?: string
   isStreaming?: boolean
+  isGeneratingComponent?: boolean
 }
 
 interface Chat {
@@ -34,6 +37,7 @@ export default function ChatIdPage() {
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputPrompt, setInputPrompt] = useState<string>("")
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("html")
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview")
   const [loading, setLoading] = useState(true)
@@ -87,9 +91,19 @@ export default function ChatIdPage() {
     }, 300)
   }, [])
 
+  const messageContextRef = useRef<{
+    aiMessageId: string
+    originalUserPrompt: string
+    chatHistory: Message[]
+  } | null>(null)
+
   // Hook for generating the actual component code
   const { complete: completeComponent, isLoading: isLoadingComponent } = useCompletion({
     api: "/api/generate",
+    body: {
+      language: selectedLanguage,
+      chatHistory: messages.slice(-10), // Last 10 messages for context
+    },
     onFinish: async (prompt, completion) => {
       console.log("Component generation finished:", completion)
       setGeneratedComponent(completion)
@@ -102,10 +116,19 @@ export default function ChatIdPage() {
       setViewMode("preview")
       if (messageContextRef.current) {
         const { aiMessageId } = messageContextRef.current
-        console.log("Saving component code to message:", aiMessageId)
-        await saveMessageWithComponent(aiMessageId, completion)
+        const componentTitle = generateComponentTitle(messageContextRef.current.originalUserPrompt)
+        await saveMessageWithComponent(aiMessageId, completion, componentTitle)
         setMessages((prev) =>
-          prev.map((msg) => (msg.id === aiMessageId ? { ...msg, component_code: completion } : msg)),
+          prev.map((msg) =>
+            msg.id === aiMessageId
+              ? {
+                  ...msg,
+                  component_code: completion,
+                  component_title: componentTitle,
+                  isGeneratingComponent: false,
+                }
+              : msg,
+          ),
         )
       }
     },
@@ -118,18 +141,35 @@ export default function ChatIdPage() {
     },
   })
 
+  // Handle component generation start
+  useEffect(() => {
+    if (isLoadingComponent && messageContextRef.current) {
+      const { aiMessageId } = messageContextRef.current
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageId
+            ? { ...msg, isGeneratingComponent: true, component_title: "Generating component..." }
+            : msg,
+        ),
+      )
+    }
+  }, [isLoadingComponent])
+
   // Hook for generating the AI's chat response
-  const messageContextRef = useRef<{ aiMessageId: string; originalUserPrompt: string } | null>(null)
   const {
     completion: chatCompletionText,
     isLoading: isLoadingChat,
     complete: completeChat,
   } = useCompletion({
     api: "/api/chat-response",
+    body: {
+      language: selectedLanguage,
+      chatHistory: messages.slice(-10),
+    },
     onFinish: async (prompt, completion) => {
       console.log("Chat response finished:", completion)
       if (messageContextRef.current) {
-        const { aiMessageId, originalUserPrompt } = messageContextRef.current
+        const { aiMessageId, originalUserPrompt, chatHistory } = messageContextRef.current
         try {
           const realAiMessageId = await saveMessage("ai", completion)
           console.log("AI message saved with ID:", realAiMessageId)
@@ -140,8 +180,10 @@ export default function ChatIdPage() {
                 : msg,
             ),
           )
-          messageContextRef.current = { aiMessageId: realAiMessageId, originalUserPrompt }
-          completeComponent(originalUserPrompt)
+          messageContextRef.current = { aiMessageId: realAiMessageId, originalUserPrompt, chatHistory }
+          if (!isDiscussMode.current) {
+            completeComponent(originalUserPrompt)
+          }
         } catch (error) {
           console.error("Error saving AI message:", error)
           toast.error("Error saving AI response")
@@ -156,6 +198,77 @@ export default function ChatIdPage() {
       )
     },
   })
+
+  const { complete: completeDiscuss, isLoading: isLoadingDiscuss } = useCompletion({
+    api: "/api/discuss",
+    body: {
+      chatHistory: messages.slice(-10),
+    },
+    onFinish: async (prompt, completion) => {
+      console.log("Discuss response finished:", completion)
+      if (messageContextRef.current) {
+        const { aiMessageId } = messageContextRef.current
+        try {
+          const realAiMessageId = await saveMessage("ai", completion)
+          console.log("AI discuss message saved with ID:", realAiMessageId)
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageId && msg.isStreaming
+                ? { ...msg, id: realAiMessageId, content: completion, isStreaming: false }
+                : msg,
+            ),
+          )
+        } catch (error) {
+          console.error("Error saving AI discuss message:", error)
+          toast.error("Error saving AI response")
+        }
+      }
+    },
+    onError: (err) => {
+      console.error("Discuss response error:", err)
+      toast.error("Error getting AI response.", { description: err.message })
+      setMessages((prev) =>
+        prev.map((msg) => (msg.isStreaming ? { ...msg, content: `Error: ${err.message}`, isStreaming: false } : msg)),
+      )
+    },
+  })
+
+  // Hook for handling web search responses
+  const { complete: completeSearch, isLoading: isLoadingSearch } = useCompletion({
+    api: "/api/search",
+    body: {
+      chatHistory: messages.slice(-10),
+    },
+    onFinish: async (prompt, completion) => {
+      console.log("Search response finished:", completion)
+      if (messageContextRef.current) {
+        const { aiMessageId } = messageContextRef.current
+        try {
+          const realAiMessageId = await saveMessage("ai", completion)
+          console.log("AI search message saved with ID:", realAiMessageId)
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageId && msg.isStreaming
+                ? { ...msg, id: realAiMessageId, content: completion, isStreaming: false }
+                : msg,
+            ),
+          )
+        } catch (error) {
+          console.error("Error saving AI search message:", error)
+          toast.error("Error saving AI response")
+        }
+      }
+    },
+    onError: (err) => {
+      console.error("Search response error:", err)
+      toast.error("Error getting search response.", { description: err.message })
+      setMessages((prev) =>
+        prev.map((msg) => (msg.isStreaming ? { ...msg, content: `Error: ${err.message}`, isStreaming: false } : msg)),
+      )
+    },
+  })
+
+  const isDiscussMode = useRef(false)
 
   // Load messages from database
   const loadMessages = useCallback(async () => {
@@ -176,6 +289,7 @@ export default function ChatIdPage() {
         sender: msg.sender,
         content: msg.content,
         component_code: msg.component_code,
+        component_title: msg.component_title,
       }))
       console.log("Processed messages:", loadedMessages)
       setMessages(loadedMessages)
@@ -248,16 +362,25 @@ export default function ChatIdPage() {
     }
   }
 
-  const saveMessageWithComponent = async (messageId: string, componentCode: string) => {
+  const saveMessageWithComponent = async (messageId: string, componentCode: string, componentTitle?: string) => {
     try {
       console.log("Updating message with component code:", { messageId, codeLength: componentCode.length })
       const { data, error } = await supabase
         .from("messages")
-        .update({ component_code: componentCode })
+        .update({
+          component_code: componentCode,
+          component_title: componentTitle || "Generated Component",
+        })
         .eq("id", messageId)
         .select()
+
       if (error) {
         console.error("Error updating message with component:", error)
+        if (error.code === "PGRST204" && error.message?.includes("component_title")) {
+          console.warn("component_title column not found - please run the database migration script")
+          toast.error("Database needs to be updated. Please run the migration script.")
+          return
+        }
         throw error
       }
       console.log("Message updated successfully:", data)
@@ -267,45 +390,127 @@ export default function ChatIdPage() {
     }
   }
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (
+    model: string,
+    language: string,
+    discussMode?: boolean,
+    files?: File[],
+    searchMode?: boolean,
+  ) => {
     if (!inputPrompt.trim()) {
       toast.warning("Please enter a message.")
       return
     }
+
+    setSelectedLanguage(language)
+    isDiscussMode.current = discussMode || false
+
     const tempUserMessageId = `temp-user-${Date.now()}`
     const tempAiMessageId = `temp-ai-${Date.now() + 1}`
     const currentInput = inputPrompt
-    const userMessage: Message = { id: tempUserMessageId, sender: "user", content: currentInput }
-    const aiMessage: Message = { id: tempAiMessageId, sender: "ai", content: "Thinking...", isStreaming: true }
+
+    let userMessageContent = currentInput
+    if (files && files.length > 0) {
+      const fileNames = files.map((f) => f.name).join(", ")
+      userMessageContent += `\n\n[Uploaded files: ${fileNames}]`
+    }
+    if (searchMode) {
+      userMessageContent += `\n\n[Web search enabled]`
+    }
+
+    const userMessage: Message = { id: tempUserMessageId, sender: "user", content: userMessageContent }
+    const aiMessage: Message = {
+      id: tempAiMessageId,
+      sender: "ai",
+      content: searchMode ? "Searching the web..." : "Thinking...",
+      isStreaming: true,
+    }
     setMessages((prev) => [...prev, userMessage, aiMessage])
     setInputPrompt("")
+
     try {
-      const userMessageId = await saveMessage("user", currentInput)
+      const userMessageId = await saveMessage("user", userMessageContent)
       setMessages((prev) => prev.map((msg) => (msg.id === tempUserMessageId ? { ...msg, id: userMessageId } : msg)))
-      messageContextRef.current = { aiMessageId: tempAiMessageId, originalUserPrompt: currentInput }
-      await completeChat(currentInput)
+
+      const currentChatHistory = [...messages, userMessage]
+      messageContextRef.current = {
+        aiMessageId: tempAiMessageId,
+        originalUserPrompt: currentInput,
+        chatHistory: currentChatHistory,
+      }
+
+      if (searchMode) {
+        let promptWithSearch = currentInput
+        if (files && files.length > 0) {
+          promptWithSearch = await processFilesForDiscuss(files, currentInput)
+        }
+        try {
+          await completeSearch(promptWithSearch)
+        } catch (searchError) {
+          console.error("Search completion error:", searchError)
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === tempAiMessageId
+                ? {
+                    ...msg,
+                    content: "Sorry, I encountered an error while searching. Let me help you without web search.",
+                    isStreaming: false,
+                  }
+                : msg,
+            ),
+          )
+        }
+      } else if (discussMode) {
+        let promptWithFiles = currentInput
+        if (files && files.length > 0) {
+          promptWithFiles = await processFilesForDiscuss(files, currentInput)
+        }
+        await completeDiscuss(promptWithFiles)
+      } else {
+        await completeChat(currentInput)
+      }
     } catch (error) {
       console.error("Error in handleSendMessage:", error)
       toast.error("Error sending message")
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempUserMessageId && msg.id !== tempAiMessageId))
     }
   }
 
-  // const handleCopyCode = () => {
-  //   if (generatedComponent) {
-  //     navigator.clipboard.writeText(generatedComponent)
-  //     toast.success("Code copied to clipboard!")
-  //   }
-  // }
-
-  const handleRestoreComponent = (componentCode: string) => {
-    setGeneratedComponent(componentCode)
-    setIsComponentVisible(true)
-    setViewMode("preview")
-    toast.success("Component restored!")
+  const generateComponentTitle = (prompt: string): string => {
+    const lowerPrompt = prompt.toLowerCase()
+    if (lowerPrompt.includes("game")) return "3D Game Component"
+    if (lowerPrompt.includes("player")) return "Player System"
+    if (lowerPrompt.includes("weapon")) return "Weapon System"
+    if (lowerPrompt.includes("match") || lowerPrompt.includes("history")) return "Match History"
+    if (lowerPrompt.includes("arena") || lowerPrompt.includes("map")) return "Arena System"
+    if (lowerPrompt.includes("dashboard")) return "Dashboard Component"
+    if (lowerPrompt.includes("form")) return "Form Component"
+    if (lowerPrompt.includes("chart") || lowerPrompt.includes("graph")) return "Chart Component"
+    return "Generated Component"
   }
 
+  const processFilesForDiscuss = async (files: File[], userPrompt: string): Promise<string> => {
+    let processedPrompt = userPrompt
 
-  const isGenerating = isLoadingChat || isLoadingComponent
+    for (const file of files) {
+      if (file.type.startsWith("image/")) {
+        processedPrompt += `\n\nI've uploaded an image: ${file.name}. Please describe what you see in this image.`
+      } else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+        processedPrompt += `\n\nI've uploaded a PDF file: ${file.name}. Please summarize the content of this document.`
+      } else if (
+        file.type.startsWith("text/") ||
+        file.name.endsWith(".txt") ||
+        file.name.endsWith(".doc") ||
+        file.name.endsWith(".docx")
+      ) {
+        processedPrompt += `\n\nI've uploaded a document: ${file.name}. Please analyze and summarize the content.`
+      }
+    }
+
+    return processedPrompt
+  }
+
+  const isGenerating = isLoadingChat || isLoadingComponent || isLoadingDiscuss || isLoadingSearch
 
   useEffect(() => {
     if (isLoadingChat && chatCompletionText) {

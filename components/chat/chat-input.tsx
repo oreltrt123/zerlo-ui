@@ -1,19 +1,38 @@
 "use client"
-import { useState } from "react"
+import { useState, useRef } from "react"
+import type React from "react"
+
 import { Button } from "@/components/ui/button"
-import { Sparkles, Check, CircleIcon as CircleQuestionMark } from "lucide-react"
+import {
+  Sparkles,
+  Check,
+  FileQuestion as CircleQuestionMark,
+  MessageCircle,
+  Paperclip,
+  X,
+  Search,
+} from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
-// import { Badge } from "@/components/ui/badge"
-import { SiOpenai, SiAnthropic, SiGooglegemini, SiX } from "@icons-pack/react-simple-icons"
+import {
+  SiOpenai,
+  SiAnthropic,
+  SiGooglegemini,
+  SiX,
+  SiTypescript,
+  SiJavascript,
+  SiPython,
+  SiHtml5,
+} from "@icons-pack/react-simple-icons"
 import Image from "next/image"
-// import { Tooltip } from "@/components/ui/tooltip"
+import "@/styles/button.css"
+import TextareaAutosize from "react-textarea-autosize"
+import { RepoBanner } from "./repo-banner"
 
-import TextareaAutosize from 'react-textarea-autosize'
-import { RepoBanner } from './repo-banner'
-// Updated models data to include Claude
-
-const models: Record<string, { name: string; author: string; description?: string; soon?: string; features?: string[] }> = {
+const models: Record<
+  string,
+  { name: string; author: string; description?: string; soon?: string; features?: string[] }
+> = {
   "gpt-4o-mini": {
     name: "GPT-4o Mini",
     author: "OpenAI",
@@ -44,41 +63,112 @@ const models: Record<string, { name: string; author: string; description?: strin
 }
 
 const exampleData = {
-  fitness: `Generate a dashboard for fitness tracking with the following data:\nActivity,Duration(min),Calories,HeartRate,Distance(km)\nMorning Run,45,420,145,6.2\nYoga Session,60,180,95,0\nCycling,90,650,138,25.5\nSwimming,30,280,125,1.2\nHIIT Workout,25,310,162,0\nEvening Walk,40,150,98,3.8\nWeight Training,50,220,118,0`,
-  library: `Create a sortable table for a library collection:\nTitle,Author,Genre,Rating,Year,Available\nThe Midnight Library,Matt Haig,Fiction,4.8,2020,Yes\nAtomic búAtomic Habits,James Clear,Self-Help,4.9,2018,No\nProject Hail Mary,Andy Weir,Sci-Fi,4.7,2021,Yes\nEducated,Tara Westover,Memoir,4.6,2018,Yes\nThe Silent Patient,Alex Michaelides,Thriller,4.5,2019,No\nSapiens,Yuval Noah Harari,History,4.8,2011,Yes\nDune,Frank Herbert,Sci-Fi,4.9,1965,Yes`,
-  orders: `Visualize restaurant orders with a summary and a list:\nOrder ID,Customer,Items,Total,Time,Status\n#1234,Sarah Chen,"Pizza Margherita, Salad",$28.50,12:15 PM,Delivered\n#1235,Mike Johnson,"Burger Deluxe, Fries, Coke",$18.99,12:30 PM,Preparing\n#1236,Emily Davis,"Pasta Carbonara, Wine",$35.00,12:45 PM,Ready\n#1237,Alex Wong,"Sushi Platter, Miso Soup",$42.80,1:00 PM,In Transit\n#1238,Lisa Brown,"Caesar Salad, Smoothie",$16.75,1:15 PM,Confirmed`,
-  weather: `Display weather monitoring data in a card layout:\nLocation | Time | Temp(°C) | Humidity(%) | Condition | Wind(km/h)\nTokyo | 08:00 | 22 | 65 | Partly Cloudy | 12\nLondon | 08:00 | 14 | 78 | Light Rain | 18\nNew York | 08:00 | 18 | 52 | Clear | 8\nSydney | 08:00 | 26 | 70 | Sunny | 15\nDubai | 08:00 | 35 | 45 | Hot & Dry | 22\nParis | 08:00 | 16 | 68 | Overcast | 10`,
-  employees: `Create an employee directory with search and filter options:\n- John Smith (Engineering) - Senior Developer - john.smith@company.com - Ext: 2154\n- Maria Garcia (Marketing) - Brand Manager - maria.garcia@company.com - Ext: 3287\n- David Lee (Sales) - Account Executive - david.lee@company.com - Ext: 4156\n- Emma Wilson (HR) - Talent Acquisition - emma.wilson@company.com - Ext: 5623\n- Robert Chen (Finance) - Financial Analyst - robert.chen@company.com - Ext: 6789\n- Sophie Turner (Design) - UX Designer - sophie.turner@company.com - Ext: 7432\n- James Park (Engineering) - DevOps Engineer - james.park@company.com - Ext: 8901`,
+  battleRoyale: `Create a professional 3D Battle Royale game:
+- Complete lobby system with 100-player matchmaking and squad formation
+- Massive open-world map with cities, forests, mountains, and military bases
+- Realistic parachute drop system with wind physics and landing mechanics
+- Advanced loot system with weapon tiers, attachments, armor, and consumables
+- Dynamic storm circle with visual effects and damage zones
+- Vehicles: cars, motorcycles, boats, helicopters with realistic physics
+- Building destruction system and interactive environment objects
+- Professional HUD with minimap, inventory, health/armor indicators
+- Spectator mode and replay system with cinematic camera angles`,
+
+  tacticalFPS: `Design a tactical 3D FPS with complete game systems:
+- Lobby with team formation, map voting, and tactical planning phase
+- Realistic military environments: urban warfare, desert compounds, jungle bases
+- Professional weapon system: assault rifles, SMGs, snipers, explosives with realistic ballistics
+- Character classes: Assault, Support, Sniper, Engineer with unique abilities
+- Advanced AI enemies with cover system, flanking tactics, and communication
+- Destructible environments and breach mechanics for doors/walls
+- Real-time voice chat integration and tactical marking system
+- Match statistics, ranking system, and unlockable content progression`,
+
+  racingSimulator: `Build a professional 3D racing simulator:
+- Complete career mode with championships, sponsors, and team management
+- Realistic car physics with tire wear, fuel consumption, and damage modeling
+- Multiple racing disciplines: Formula 1, Rally, GT, Street Racing
+- Professional race tracks with dynamic weather and day/night cycles
+- Advanced car customization: engine tuning, aerodynamics, livery editor
+- AI opponents with realistic racing behavior and difficulty scaling
+- Multiplayer lobby with custom tournaments and leaderboards
+- Pit stop strategy, tire selection, and real-time telemetry data`,
+
+  spaceExploration: `Create an advanced 3D space exploration game:
+- Complete space station hub with mission briefings and ship customization
+- Realistic solar system with planets, moons, asteroids, and space stations
+- Advanced spacecraft with Newtonian physics and orbital mechanics
+- Resource mining, trading, and base building on planetary surfaces
+- Space combat with energy weapons, missiles, and shield systems
+- Procedural planet generation with diverse biomes and alien life
+- Multiplayer cooperation for large-scale construction projects
+- Research tree for technology advancement and ship upgrades`,
 }
 
 interface ChatInputProps {
   inputPrompt: string
   setInputPrompt: (value: string) => void
-  onSendMessage: (model: string) => void
+  onSendMessage: (model: string, language: string, discussMode?: boolean, files?: File[], searchMode?: boolean) => void
   isGenerating: boolean
 }
 
 export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenerating }: ChatInputProps) {
   const [model, setModel] = useState<string>("gemini-2.5-flash")
-  const [open, setOpen] = useState(false)
+  const [language, setLanguage] = useState<string>("html")
+  const [modelOpen, setModelOpen] = useState(false)
+  const [languageOpen, setLanguageOpen] = useState(false)
+  const [discussMode, setDiscussMode] = useState(false)
+  const [searchMode, setSearchMode] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleExampleClick = (exampleText: string) => {
     setInputPrompt(exampleText)
   }
 
-  const handleSendClick = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!isGenerating && inputPrompt.trim()) {
-      onSendMessage(model)
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    setUploadedFiles((prev) => [...prev, ...files])
+    setDiscussMode(true)
+  }
+
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
+    if (uploadedFiles.length === 1) {
+      setDiscussMode(false)
     }
   }
 
-  const labelMap: Record<string, { label: string; image: string }> = {
-    fitness: { label: "Fitness Tracking", image: "/assets/images/fitness.png" },
-    library: { label: "Library Collection", image: "/assets/images/library.png" },
-    orders: { label: "Restaurant Orders", image: "/assets/images/orders.png" },
-    weather: { label: "Weather Monitoring", image: "/assets/images/weather.png" },
-    employees: { label: "Employee Directory", image: "/assets/images/employees.png" },
+  const handleSendClick = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!isGenerating && inputPrompt.trim()) {
+      onSendMessage(model, language, discussMode, uploadedFiles, searchMode)
+      setUploadedFiles([])
+      setSearchMode(false)
+    }
+  }
+
+  const labelMap: Record<string, { label: string; imageLight: string; imageDark: string }> = {
+    battleRoyale: {
+      label: "Battle Royale",
+      imageLight: "/assets/images/arena-conditions-light.png",
+      imageDark: "/assets/images/arena-conditions-dark.png",
+    },
+    tacticalFPS: {
+      label: "Tactical FPS",
+      imageLight: "/assets/images/match-history-light.png",
+      imageDark: "/assets/images/match-history-dark.png",
+    },
+    racingSimulator: {
+      label: "Racing Simulator",
+      imageLight: "/assets/images/weapon-loadouts-light.png",
+      imageDark: "/assets/images/weapon-loadouts-dark.png",
+    },
+    spaceExploration: {
+      label: "Space Exploration",
+      imageLight: "/assets/images/player-stats-light.png",
+      imageDark: "/assets/images/player-stats-dark.png",
+    },
   }
 
   const getModelIcon = (modelId: string) => {
@@ -96,8 +186,21 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
     }
   }
 
+  const getLanguageIcon = (languageId: string) => {
+    switch (languageId) {
+      case "typescript":
+        return <SiTypescript className="h-4 w-4 mr-2" />
+      case "javascript":
+        return <SiJavascript className="h-4 w-4 mr-2" />
+      case "python":
+        return <SiPython className="h-4 w-4 mr-2" />
+      case "html":
+        return <SiHtml5 className="h-4 w-4 mr-2" />
+    }
+  }
+
   function onEnter(e: React.KeyboardEvent<HTMLFormElement>) {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       if (e.currentTarget.checkValidity()) {
         handleSendClick(e)
@@ -107,41 +210,79 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
 
   return (
     <div className="p-6 bg-background">
-      <div className="space-y-4 mb-4">
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(exampleData).map(([key, exampleText]) => {
-            const { label, image } = labelMap[key] || { label: key, image: "" }
-            return (
-              <Button
-                key={key}
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-muted-foreground hover:text-muted-foreground text-xs shadow-none font-[500] hover:border-[rgba(0,153,255,0.25)] dark:hover:border-[#58a6ff] bg-[#8888881A] flex items-center gap-2"
-                onClick={() => handleExampleClick(exampleText)}
-              >
-                {image && <Image src={image || "/placeholder.svg"} alt={`${label} icon`} width={16} height={16} />}
-                {label}
-              </Button>
-            )
-          })}
+      {!discussMode && (
+        <div className="space-y-4 mb-4">
+          <div className="flex flex-wrap gap-2 relative left-[6%]">
+            {Object.entries(exampleData).map(([key, exampleText]) => {
+              const { label, imageLight, imageDark } = labelMap[key] || { label: key, imageLight: "", imageDark: "" }
+              return (
+                <Button
+                  key={key}
+                  variant="outline"
+                  size="sm"
+                  className="r2552esf25_252trewt3erblueFontDocs h-8 px-3 text-muted-foreground dark:text-white hover:text-muted-foreground text-xs shadow-none font-[500] bg-[#8888881A] dark:bg-[#303030] flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                  onClick={() => handleExampleClick(exampleText)}
+                >
+                  {imageLight && imageDark && (
+                    <>
+                      <Image
+                        src={imageLight || "/placeholder.svg"}
+                        alt={`${label} icon light`}
+                        width={16}
+                        height={16}
+                        className="dark:hidden"
+                      />
+                      <Image
+                        src={imageDark || "/placeholder.svg"}
+                        alt={`${label} icon dark`}
+                        width={16}
+                        height={16}
+                        className="hidden dark:block"
+                      />
+                    </>
+                  )}
+                  {label}
+                </Button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-2xl mx-auto relative top-[33px]">
-        <form
-          onSubmit={handleSendClick}
-          onKeyDown={onEnter}
-          className="mb-2 mt-auto flex flex-col bg-background"
-        >
+        <form onSubmit={handleSendClick} onKeyDown={onEnter} className="mb-2 mt-auto flex flex-col bg-background">
           <div className="relative">
             <RepoBanner className="absolute bottom-full inset-x-2 translate-y-1 z-0 pb-2" />
-            <div className="rounded-2xl relative z-10 bg-background border dark:border-[#30363d]">
+            {uploadedFiles.length > 0 && (
+              <div className="mb-2 p-2 bg-gray-50 dark:bg-[#404040] rounded-lg">
+                <div className="flex flex-wrap gap-2">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-white dark:bg-[#303030] px-2 py-1 rounded text-xs"
+                    >
+                      <span className="truncate max-w-[150px]">{file.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="rounded-2xl relative z-10 bg-background dark:bg-[#303030] border dark:border-[#444444]">
               <div className="flex items-center px-3 py-2 gap-1">
-                <Popover open={open} onOpenChange={setOpen}>
+                <Popover open={modelOpen} onOpenChange={setModelOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="h-8 px-3 hover:bg-[#88888811] text-muted-foreground hover:text-muted-foreground rounded-lg border-0 font-medium text-xs"
+                      className="h-8 px-3 hover:bg-[#88888811] text-muted-foreground hover:text-preview-foreground rounded-lg border-0 font-medium text-xs"
                       aria-label="Select model"
                       title={`Current model: ${models[model]?.name || model}`}
                     >
@@ -149,7 +290,7 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                       <span className="hidden md:inline">{models[model]?.name || model}</span>
                     </Button>
                   </PopoverTrigger>
-                  {open && (
+                  {modelOpen && (
                     <PopoverContent className="p-0 w-[300px]">
                       <Command>
                         <CommandInput placeholder="Select model..." />
@@ -162,51 +303,20 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                                 value={modelOption}
                                 onSelect={(value) => {
                                   setModel(value)
-                                  setOpen(false)
+                                  setModelOpen(false)
                                 }}
                               >
-                                {/* <Tooltip
-                                  content={
-                                    <div className="p-2 max-w-xs">
-                                      <div className="font-semibold text-foreground text-sm mb-1">
-                                        {models[modelOption]?.name || modelOption}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground mb-2">
-                                        by {models[modelOption]?.author}
-                                      </div>
-                                      {models[modelOption]?.description && (
-                                        <div className="text-xs text-muted-foreground mb-2 w-full">
-                                          {models[modelOption].description}
-                                        </div>
-                                      )}
-                                      {models[modelOption]?.features && models[modelOption].features.length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                          {models[modelOption].features.map((feature) => (
-                                            <Badge key={feature} variant="secondary" className="text-xs">
-                                              {feature}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  }
-                                  className="bg-muted max-w-xs min-w-xs w-xs"
-                                  side="left"
-                                > */}
-                                  <div className="flex items-center w-full">
-                                    {modelOption === model && <Check className="mr-2 h-4 w-4" />}
-                                    {modelOption !== model && getModelIcon(modelOption)}
-                                      <div className="flex flex-col">
-                                        <span>{models[modelOption]?.name || modelOption}</span>
-                                        <span style={{ fontSize: "13px", color: "gray" }}>
-                                        {models[modelOption].description}
-                                        </span>
-                                        <span style={{ fontSize: "13px", color: "gray" }}>
-                                        {models[modelOption].soon}
-                                        </span>
-                                      </div>
+                                <div className="flex items-center w-full">
+                                  {modelOption === model && <Check className="mr-2 h-4 w-4" />}
+                                  {modelOption !== model && getModelIcon(modelOption)}
+                                  <div className="flex flex-col">
+                                    <span>{models[modelOption]?.name || modelOption}</span>
+                                    <span style={{ fontSize: "13px", color: "gray" }}>
+                                      {models[modelOption].description}
+                                    </span>
+                                    <span style={{ fontSize: "13px", color: "gray" }}>{models[modelOption].soon}</span>
                                   </div>
-                                {/* </Tooltip> */}
+                                </div>
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -215,6 +325,65 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                     </PopoverContent>
                   )}
                 </Popover>
+                {!discussMode && (
+                  <Popover open={languageOpen} onOpenChange={setLanguageOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-8 px-3 hover:bg-[#88888811] text-muted-foreground hover:text-muted-foreground rounded-lg border-0 font-medium text-xs"
+                        aria-label="Select language"
+                        title={`Current language: ${language}`}
+                      >
+                        {getLanguageIcon(language)}
+                        <span className="hidden md:inline">{language}</span>
+                      </Button>
+                    </PopoverTrigger>
+                    {languageOpen && (
+                      <PopoverContent className="p-0 w-[300px]">
+                        <Command>
+                          <CommandInput placeholder="Select language..." />
+                          <CommandList>
+                            <CommandEmpty>No languages found.</CommandEmpty>
+                            <CommandGroup>
+                              {["html", "typescript", "javascript", "python"].map((languageOption) => (
+                                <CommandItem
+                                  key={languageOption}
+                                  value={languageOption}
+                                  onSelect={(value) => {
+                                    setLanguage(value)
+                                    setLanguageOpen(false)
+                                  }}
+                                >
+                                  <div className="flex items-center w-full">
+                                    {languageOption === language && <Check className="mr-2 h-4 w-4" />}
+                                    {languageOption !== language && getLanguageIcon(languageOption)}
+                                    <div className="flex flex-col">
+                                      <span>{languageOption}</span>
+                                    </div>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                )}
+                <Button
+                  variant="ghost"
+                  className={`h-8 px-3 hover:bg-[#88888811] rounded-lg border-0 font-medium text-xs ${
+                    discussMode
+                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                      : "text-muted-foreground hover:text-muted-foreground"
+                  }`}
+                  onClick={() => setDiscussMode(!discussMode)}
+                  aria-label="Toggle discuss mode"
+                  title={discussMode ? "Exit discuss mode" : "Enter discuss mode"}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  <span className="hidden md:inline">Discuss</span>
+                </Button>
               </div>
               <TextareaAutosize
                 autoFocus={true}
@@ -222,18 +391,58 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                 maxRows={5}
                 className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none dark:text-white"
                 required={true}
-                placeholder="Describe the component you want to build, or paste structured data (CSV, JSON, etc.)."
+                placeholder={
+                  discussMode
+                    ? "Ask me anything about game development, 3D graphics, or professional game design..."
+                    : "Describe your dream game - I'll create a complete 3D experience with lobbies, realistic assets, and professional gameplay systems."
+                }
                 value={inputPrompt}
                 onChange={(e) => setInputPrompt(e.target.value)}
               />
               <div className="flex p-3 gap-2 items-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.webp,.glb,.gltf,.obj,.fbx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                  title="Upload 3D models, textures, or reference images"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchMode(!searchMode)}
+                  className={`h-8 w-8 p-0 ${
+                    searchMode
+                      ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
+                  title={
+                    searchMode
+                      ? "Disable web search for latest game dev resources"
+                      : "Enable web search for latest game dev resources"
+                  }
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
                 <div className="flex items-center flex-1 gap-2"></div>
                 <Button
-                  disabled={isGenerating || !inputPrompt.trim() || !model}
+                  disabled={isGenerating || !inputPrompt.trim() || !model || (!discussMode && !language)}
                   variant="default"
                   size="icon"
                   type="submit"
-                  className="rounded-xl h-10 w-10 bg-[#0099FF] text-white dark:bg-[#58a6ff] dark:text-white disabled:bg-[#e6e6e6] disabled:text-[#8c9196]"
+                  className="rounded-xl h-10 w-10 bg-[#0099FF] hover:bg-[#0099ffbe] disabled:bg-[#e6e6e6] disabled:text-[#8c9196] transition-all duration-200"
                 >
                   <Sparkles className="h-5 w-5" />
                 </Button>
@@ -241,8 +450,8 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            This is an open-source project made by{' '}
-            <a href="https://zerlo.online" target="_blank" className="text-[#0099FF]">
+            This is an open-source project made by{" "}
+            <a href="https://zerlo.online" target="_blank" className="text-[#0099FF]" rel="noreferrer">
               ✶ Zerlo
             </a>
           </p>

@@ -1,5 +1,4 @@
-import { createClient } from "@/supabase/server"
-import { Button } from "@/components/ui/button"
+import { createClient } from "@/supabase/server" 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Zap, Code, Gamepad2, Server, Rocket, Users, Globe } from "lucide-react"
@@ -91,7 +90,7 @@ const translations: Record<
       subtitle: "AI-Powered Development Platform",
       title: "Zerlo",
       description:
-        "Building the future of web development and gaming with AI. Create stunning websites and engaging games in seconds, not hours.",
+        "Zerlo — AI-powered platform for building websites and games. Design and launch in seconds, not hours",
       badges: {
         fast: "Lightning Fast",
         aiPowered: "AI-Powered",
@@ -101,7 +100,7 @@ const translations: Record<
     mission: {
       title: "Our Mission",
       description:
-        "At Zerlo, we believe that everyone should have the power to create. Our cutting-edge AI technology democratizes web development and game creation, making it possible for anyone to bring their ideas to life in mere seconds.",
+        "At Zerlo, we empower everyone to create. Our AI makes web and game development fast, simple, and accessible.",
       cards: {
         globalImpact: {
           title: "Global Impact",
@@ -123,13 +122,13 @@ const translations: Record<
       ural: {
         role: "Co-Founder & Lead Developer",
         description:
-          "At 22, Ural brings exceptional expertise in AI integration and full-stack development. He architects our core AI systems and ensures seamless user experiences.",
+          "Orel, programmer — develops Zerlo’s website, works with AI, manages server-side operations, and serves as Manager at Zerlo. 15 years old.",
         skills: ["AI Systems", "Full-Stack", "Architecture"],
       },
       gabi: {
         role: "Co-Founder & Infrastructure Lead",
         description:
-          "Also 22, Gabi is our infrastructure wizard and server optimization expert. He ensures Zerlo runs at lightning speed and scales seamlessly.",
+          "Gabi — Programmer, Data Writer, Website & UI/UX Designer, and Manager at Zerlo. 15 years old",
         skills: ["DevOps", "Server Management", "Scalability"],
       },
     },
@@ -660,7 +659,7 @@ export default async function AboutPage() {
 
             <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6">{t.hero.title}</h1>
 
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">{t.hero.description}</p>
+            <p className="text-xl text-gray-500 mb-8 max-w-3xl mx-auto leading-relaxed font-bold">{t.hero.description}</p>
 
             <div className="flex flex-wrap justify-center gap-3 mb-12">
               <Badge variant="secondary" className="bg-[#8888881A] text-gray-800 border-[#8888881A]">
@@ -686,7 +685,7 @@ export default async function AboutPage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{t.mission.title}</h2>
-              <p className="text-lg text-gray-600 leading-relaxed">{t.mission.description}</p>
+              <p className="text-lg text-gray-600 leading-relaxed font-bold">{t.mission.description}</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -737,9 +736,9 @@ export default async function AboutPage() {
             <Card className="bg-gradient-to-br from-[#0099ff23] to-[#8888881A] border-gray-200">
               <CardContent className="p-8">
                 <div className="w-24 h-24 bg-gradient-to-br from-[#0099FF] to-[#8888881A] rounded-full mx-auto mb-6 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">UR</span>
+                  <span className="text-2xl font-bold text-white">OR</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">Oral Revivo</h3>
+                <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">Orel Revivo</h3>
                 <p className="text-gray-600 text-center mb-4 font-medium">{t.team.ural.role}</p>
                 <p className="text-gray-600 text-center mb-6 leading-relaxed">{t.team.ural.description}</p>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -824,19 +823,6 @@ export default async function AboutPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{t.cta.title}</h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{t.cta.description}</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
-              {t.cta.primaryButton}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-3 bg-transparent"
-            >
-              {t.cta.secondaryButton}
-            </Button>
-          </div>
         </div>
       </section>
     <Footer />

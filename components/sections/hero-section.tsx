@@ -13,6 +13,7 @@ const translations: Record<string, {
   subtitle: string;
   placeholder: string;
   suggestions: string[];
+  watchDemo: string;
 }> = {
   en: {
     title: "Zerlo – Build <span style=\"color: rgb(0,153,255)\">Games</span> Smarter with AI",
@@ -24,6 +25,7 @@ const translations: Record<string, {
       "Onboarding Portal",
       "Networking App",
     ],
+    watchDemo: "Watch Demo",
   },
   fr: {
     title: "Zerlo – Créez des <span style=\"color: rgb(0,153,255)\">jeux</span> plus intelligemment avec l'IA",
@@ -35,6 +37,7 @@ const translations: Record<string, {
       "Portail d'intégration",
       "Application de réseautage",
     ],
+    watchDemo: "Regarder la démo",
   },
   he: {
     title: "זרלו – בנה <span style=\"color: rgb(0,153,255)\">משחקים</span> בצורה חכמה יותר עם AI",
@@ -46,6 +49,7 @@ const translations: Record<string, {
       "פורטל קליטה",
       "אפליקציית רשתות",
     ],
+    watchDemo: "צפה בדמו",
   },
   zh: {
     title: "Zerlo – 使用人工智能更智能地<span style=\"color: rgb(0,153,255)\">构建游戏</span>",
@@ -57,6 +61,7 @@ const translations: Record<string, {
       "入职门户",
       "社交网络应用",
     ],
+    watchDemo: "观看演示",
   },
   ar: {
     title: "زيرلو – قم ببناء <span style=\"color: rgb(0,153,255)\">الألعاب</span> بذكاء مع الذكاء الاصطناعي",
@@ -68,6 +73,7 @@ const translations: Record<string, {
       "بوابة التأهيل",
       "تطبيق التواصل",
     ],
+    watchDemo: "شاهد العرض التوضيحي",
   },
   ru: {
     title: "Zerlo – Создавайте <span style=\"color: rgb(0,153,255)\">игры</span> умнее с помощью ИИ",
@@ -79,6 +85,7 @@ const translations: Record<string, {
       "Портал для новичков",
       "Сетевое приложение",
     ],
+    watchDemo: "Смотреть демо",
   },
   hi: {
     title: "ज़रलो – AI के साथ <span style=\"color: rgb(0,153,255)\">गेम्स</span> को और स्मार्ट बनाएं",
@@ -90,6 +97,7 @@ const translations: Record<string, {
       "ऑनबोर्डिंग पोर्टल",
       "नेटवर्किंग ऐप",
     ],
+    watchDemo: "डेमो देखें",
   },
 };
 
@@ -142,6 +150,7 @@ export default function HeroSection() {
   const [language, setLanguage] = useState("en");
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -183,10 +192,10 @@ export default function HeroSection() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        background: "linear-gradient(90deg, rgba(235, 247, 255, 1) 0%, rgba(214, 239, 255, 1) 35%, rgba(255, 255, 255, 1) 100%)",
+        background: "linear-gradient(to top, #fff1eb 0%, #ace0f9 100%)",
       }}
     >
-      <div className="top-[-100px] relative z-10">
+      <div className="z-10">
         {/* Elegant Shapes */}
         <div className="absolute inset-0 overflow-hidden">
           <ElegantShape
@@ -194,7 +203,7 @@ export default function HeroSection() {
             width={600}
             height={140}
             rotate={12}
-            gradient="from-[#A0A5C2]/[0.15]"
+            gradient="from-[#ace0f9]/[0.15]"
             className="left-[-10%] md:left-[-5%] top-[15%] md:top-[20%]"
           />
           <ElegantShape
@@ -202,7 +211,7 @@ export default function HeroSection() {
             width={500}
             height={120}
             rotate={-15}
-            gradient="from-[#CEDDE4]/[0.15]"
+            gradient="from-[#fff1eb]/[0.15]"
             className="right-[-5%] md:right-[0%] top-[70%] md:top-[75%]"
           />
         </div>
@@ -232,6 +241,9 @@ export default function HeroSection() {
               className="bg-white rounded-xl p-6 
                 hover:shadow-[inset_0_0.5em_1.5em_rgba(0,0,0,0.1),inset_0_0.125em_0.5em_rgba(0,0,0,0.15)] 
                 active:shadow-[inset_0_0.3em_1em_rgba(0,0,0,0.2),inset_0_0.1em_0.4em_rgba(0,0,0,0.25)]"
+              style={{
+                boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+              }}
             >
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -275,9 +287,45 @@ export default function HeroSection() {
                 </div>
               </div>
             </motion.div>
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+              onClick={() => setIsDemoOpen(true)}
+              className="text-[#0099FF] text-sm font-medium mt-4 relative top-[-30px]"
+              style={{ textDecoration: "underline", textUnderlineOffset: "4px" }}
+            >
+              {currentTexts.watchDemo}
+            </motion.button>
           </div>
         </div>
       </div>
+
+      {isDemoOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+          onClick={() => setIsDemoOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-6xl h-[65vh] bg-transparent"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <video
+              src="/assets/video/heroSectionVideodemo.mp4"
+              autoPlay
+              muted
+              loop
+              className="w-full h-full object-cover rounded-lg"
+            />
+            <button
+              onClick={() => setIsDemoOpen(false)}
+              className="absolute top-4 right-4 text-white text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,32 +1,34 @@
 "use client"
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "sonner"
 import { createClient } from "@/supabase/client"
+import "@/styles/button.css"
 
 interface DeployModalProps {
   isOpen: boolean
   onClose: () => void
+  onOtherClose: () => void
   messages: Array<{
     id: string
     sender: "user" | "ai"
     content: string
     component_code?: string
   }>
+  buttonRef: React.RefObject<HTMLButtonElement | null>
 }
 
-export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
+export function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps) {
   const [selectedMessageId, setSelectedMessageId] = useState("")
   const [siteName, setSiteName] = useState("")
   const [isDeploying, setIsDeploying] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
-  // Filter messages that have component code
   const deployableMessages = messages.filter((msg) => msg.component_code && msg.sender === "ai")
 
   const handleDeploy = async () => {
@@ -35,7 +37,6 @@ export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
       return
     }
 
-    // Validate site name (only alphanumeric and hyphens)
     const siteNameRegex = /^[a-zA-Z0-9-]+$/
     if (!siteNameRegex.test(siteName)) {
       toast.error("Site name can only contain letters, numbers, and hyphens")
@@ -46,19 +47,11 @@ export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
 
     try {
       const selectedMessage = messages.find((msg) => msg.id === selectedMessageId)
-      if (!selectedMessage?.component_code) {
-        throw new Error("Selected message has no component code")
-      }
+      if (!selectedMessage?.component_code) throw new Error("Selected message has no component code")
 
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error("User not authenticated")
-      }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("User not authenticated")
 
-      // Check if site name already exists
       const { data: existingSite } = await supabase
         .from("deployed_sites")
         .select("id")
@@ -71,7 +64,6 @@ export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
         return
       }
 
-      // Save deployment to database
       const { data: deployment, error } = await supabase
         .from("deployed_sites")
         .insert([
@@ -88,12 +80,9 @@ export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
 
       if (error) throw error
 
-      // Create the actual site file
       const response = await fetch("/api/deploy", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           siteName,
           componentCode: selectedMessage.component_code,
@@ -101,12 +90,9 @@ export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to deploy site")
-      }
+      if (!response.ok) throw new Error("Failed to deploy site")
 
       await response.json()
-
       toast.success(`Site deployed successfully! Visit: zerlo.online.${siteName}`)
       onClose()
       setSiteName("")
@@ -119,65 +105,52 @@ export function DeployModal({ isOpen, onClose, messages }: DeployModalProps) {
     }
   }
 
+  if (!isOpen || !buttonRef.current) return null
+
+  const buttonRect = buttonRef.current.getBoundingClientRect()
+  const top = buttonRect.bottom + window.scrollY + 5
+  const left = buttonRect.left + window.scrollX
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Deploy Your Component</DialogTitle>
-        </DialogHeader>
+    <div
+      ref={modalRef}
+      className="fixed bg-white rounded-lg p-4 w-64 z-50"
+      style={{ top: `${top}px`, left: `${left}px`, boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px" }}
+    >
+      <div className="space-y-2">
+        <Label>Site Name</Label>
+        <Input
+          value={siteName}
+          onChange={(e) => setSiteName(e.target.value.toLowerCase())}
+          placeholder="my-site"
+        />
+        <p className="text-xs text-gray-500">{siteName || "NameSite"}.zerlo.online</p>
 
-        <div className="space-y-6">
-          <div>
-            <Label htmlFor="siteName">Site Name</Label>
-            <Input
-              id="siteName"
-              value={siteName}
-              onChange={(e) => setSiteName(e.target.value.toLowerCase())}
-              placeholder="my-awesome-site"
-              className="mt-1"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Your site will be available at: zerlo.online.{siteName || "your-site-name"}
-            </p>
-          </div>
+        <Label>Select Component</Label>
+        <RadioGroup value={selectedMessageId} onValueChange={setSelectedMessageId} className="space-y-1">
+          {deployableMessages.length === 0 ? (
+            <p className="text-xs text-gray-500">No deployable components.</p>
+          ) : (
+            deployableMessages.map((message) => (
+              <div key={message.id} className="flex items-center space-x-1">
+                <RadioGroupItem value={message.id} id={message.id} />
+                <Label htmlFor={message.id} className="text-xs line-clamp-1">{message.content}</Label>
+              </div>
+            ))
+          )}
+        </RadioGroup>
 
-          <div>
-            <Label>Select Component to Deploy</Label>
-            <RadioGroup value={selectedMessageId} onValueChange={setSelectedMessageId} className="mt-2">
-              {deployableMessages.length === 0 ? (
-                <p className="text-gray-500">No deployable components found in this chat.</p>
-              ) : (
-                deployableMessages.map((message) => (
-                  <div key={message.id} className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value={message.id} id={message.id} />
-                      <Label htmlFor={message.id} className="flex-1 cursor-pointer">
-                        <div className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                          <p className="text-sm font-medium mb-1">AI Response:</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">{message.content}</p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                ))
-              )}
-            </RadioGroup>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose} disabled={isDeploying}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDeploy}
-              disabled={!selectedMessageId || !siteName.trim() || isDeploying}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isDeploying ? "Deploying..." : "Deploy Site"}
-            </Button>
-          </div>
+        <div className="flex justify-end space-x-1">
+          <Button
+            onClick={handleDeploy}
+            disabled={!selectedMessageId || !siteName.trim() || isDeploying}
+            size="sm"
+            className="bg-[#0099FF] hover:bg-[#0099ffde] text-white r2552esf25_252trewt3erblueFontDocs"
+          >
+            {isDeploying ? "Deploying..." : "Deploy"}
+          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }

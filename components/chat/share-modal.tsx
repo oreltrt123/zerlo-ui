@@ -1,23 +1,25 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
-import { Copy, Link } from "lucide-react"
+import { Copy } from "lucide-react"
 import { createClient } from "@/supabase/client"
 import { useParams } from "next/navigation"
+import "@/styles/button.css"
 
 interface ShareModalProps {
   isOpen: boolean
   onClose: () => void
+  onOtherClose: () => void
+  buttonRef: React.RefObject<HTMLButtonElement | null>
 }
 
-export function ShareModal({ isOpen, onClose }: ShareModalProps) {
+export function ShareModal({ isOpen, onClose, buttonRef }: ShareModalProps) {
   const params = useParams()
   const chatId = params?.id as string
   const supabase = createClient()
@@ -40,10 +42,8 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     setIsGenerating(true)
 
     try {
-      // Generate a unique share ID
       const shareId = Math.random().toString(36).substring(2, 15)
 
-      // Update the chat with sharing settings
       const { error } = await supabase
         .from("chats")
         .update({
@@ -57,10 +57,8 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
 
       if (error) throw error
 
-      const shareLink =
-        typeof window !== "undefined" ? `${window.location.origin}/shared/${shareId}` : `/shared/${shareId}`
+      const shareLink = typeof window !== "undefined" ? `${window.location.origin}/shared/${shareId}` : `/shared/${shareId}`
       setGeneratedLink(shareLink)
-
       toast.success("Share link generated successfully!")
     } catch (error) {
       console.error("Error generating share link:", error)
@@ -82,130 +80,92 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     onClose()
   }
 
+  if (!isOpen || !buttonRef.current) return null
+
+  const buttonRect = buttonRef.current.getBoundingClientRect()
+  const top = buttonRect.bottom + window.scrollY + 5
+  const left = buttonRect.left + window.scrollX
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Link className="h-5 w-5" />
-            Share Chat
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {!generatedLink ? (
-            <>
-              {/* Privacy Settings */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Visibility</Label>
-                  <RadioGroup
-                    value={shareSettings.visibility}
-                    onValueChange={(value: "public" | "private") =>
-                      setShareSettings((prev) => ({ ...prev, visibility: value }))
-                    }
-                    className="mt-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="public" id="public" />
-                      <Label htmlFor="public" className="text-sm">
-                        Public - Anyone with the link can view
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="private" id="private" />
-                      <Label htmlFor="private" className="text-sm">
-                        Private - Only you can view
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Permissions */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Permissions</Label>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="allow-messages" className="text-sm">
-                      Allow others to send messages
-                    </Label>
-                    <Switch
-                      id="allow-messages"
-                      checked={shareSettings.allowMessages}
-                      onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowMessages: checked }))}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="allow-deploy" className="text-sm">
-                      Allow others to deploy components
-                    </Label>
-                    <Switch
-                      id="allow-deploy"
-                      checked={shareSettings.allowDeploy}
-                      onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowDeploy: checked }))}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="allow-copy" className="text-sm">
-                      Allow others to copy code
-                    </Label>
-                    <Switch
-                      id="allow-copy"
-                      checked={shareSettings.allowCopy}
-                      onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowCopy: checked }))}
-                    />
-                  </div>
-                </div>
+    <div
+      className="fixed bg-white rounded-lg p-4 w-64 z-50"
+      style={{ top: `${top}px`, left: `${left}px`, boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px" }}
+    >
+      <div className="space-y-2">
+        {!generatedLink ? (
+          <>
+            <Label>Visibility</Label>
+            <RadioGroup
+              value={shareSettings.visibility}
+              onValueChange={(value: "public" | "private") => setShareSettings((prev) => ({ ...prev, visibility: value }))}
+              className="space-y-1"
+            >
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="public" id="public" />
+                <Label htmlFor="public" className="text-xs">Public</Label>
               </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={handleClose}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleGenerateLink}
-                  disabled={isGenerating}
-                  className="bg-[#0099FF] hover:bg-[#0088EE] text-white"
-                >
-                  {isGenerating ? "Generating..." : "Create Link"}
-                </Button>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="private" id="private" />
+                <Label htmlFor="private" className="text-xs">Private</Label>
               </div>
-            </>
-          ) : (
-            <>
-              {/* Generated Link Display */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Share Link</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input value={generatedLink} readOnly className="flex-1 bg-gray-50" />
-                    <Button onClick={handleCopyLink} size="sm" variant="outline" className="px-3 bg-transparent">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+            </RadioGroup>
 
-                {/* Settings Summary */}
-                <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                  <div className="font-medium mb-2">Link Settings:</div>
-                  <ul className="space-y-1 text-gray-600">
-                    <li>• Visibility: {shareSettings.visibility === "public" ? "Public" : "Private"}</li>
-                    <li>• Messages: {shareSettings.allowMessages ? "Allowed" : "Blocked"}</li>
-                    <li>• Deploy: {shareSettings.allowDeploy ? "Allowed" : "Blocked"}</li>
-                    <li>• Copy Code: {shareSettings.allowCopy ? "Allowed" : "Blocked"}</li>
-                  </ul>
-                </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="allow-messages" className="text-xs">Messages</Label>
+                <Switch
+                  id="allow-messages"
+                  checked={shareSettings.allowMessages}
+                  onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowMessages: checked }))}
+                />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="allow-deploy" className="text-xs">Deploy</Label>
+                <Switch
+                  id="allow-deploy"
+                  checked={shareSettings.allowDeploy}
+                  onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowDeploy: checked }))}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="allow-copy" className="text-xs">Copy</Label>
+                <Switch
+                  id="allow-copy"
+                  checked={shareSettings.allowCopy}
+                  onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowCopy: checked }))}
+                />
+              </div>
+            </div>
 
-              <div className="flex justify-end">
-                <Button onClick={handleClose}>Done</Button>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            <div className="flex justify-end space-x-1">
+              <Button
+                onClick={handleGenerateLink}
+                disabled={isGenerating}
+                size="sm"
+                className="bg-[#0099FF] hover:bg-[#0099ffde] text-white r2552esf25_252trewt3erblueFontDocs"
+              >
+                {isGenerating ? "Generating..." : "Create"}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Label>Share Link</Label>
+            <div className="flex items-center gap-1">
+              <Input value={generatedLink} readOnly className="flex-1 text-xs bg-gray-50" />
+              <Button onClick={handleCopyLink} size="sm" variant="outline" className="p-1 bg-transparent">
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500">
+              • Vis: {shareSettings.visibility === "public" ? "Public" : "Private"} • Msg: {shareSettings.allowMessages ? "Yes" : "No"} • Dep: {shareSettings.allowDeploy ? "Yes" : "No"} • Copy: {shareSettings.allowCopy ? "Yes" : "No"}
+            </p>
+            <div className="flex justify-end">
+              <Button onClick={handleClose} size="sm">Done</Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   )
 }

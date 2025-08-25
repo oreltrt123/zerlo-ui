@@ -14,6 +14,7 @@ const translations: Record<string, {
       { label: "Privacy Policy", href: "/legal/privacy" },
       { label: "Terms of Use", href: "/legal/terms" },
       { label: "Contact Us", href: "/contact" },
+      { label: "Feature Request", href: "https://zerlo.featurebase.app/" },
     ],
   },
   fr: {
@@ -24,6 +25,7 @@ const translations: Record<string, {
       { label: "Politique de confidentialité", href: "/legal/privacy" },
       { label: "Conditions d'utilisation", href: "/legal/terms" },
       { label: "Contactez-nous", href: "/contact" },
+      { label: "Demande de fonctionnalité", href: "https://zerlo.featurebase.app/" },
     ],
   },
   he: {
@@ -34,6 +36,7 @@ const translations: Record<string, {
       { label: "מדיניות פרטיות", href: "/legal/privacy" },
       { label: "תנאי שימוש", href: "/legal/terms" },
       { label: "צור קשר", href: "/contact" },
+      { label: "בקשת תכונה", href: "https://zerlo.featurebase.app/" },
     ],
   },
   zh: {
@@ -44,6 +47,7 @@ const translations: Record<string, {
       { label: "隐私政策", href: "/legal/privacy" },
       { label: "使用条款", href: "/legal/terms" },
       { label: "联系我们", href: "/contact" },
+      { label: "功能请求", href: "https://zerlo.featurebase.app/" },
     ],
   },
   ar: {
@@ -54,6 +58,7 @@ const translations: Record<string, {
       { label: "سياسة الخصوصية", href: "/legal/privacy" },
       { label: "شروط الاستخدام", href: "/legal/terms" },
       { label: "اتصل بنا", href: "/contact" },
+      { label: "طلب ميزة", href: "https://zerlo.featurebase.app/" },
     ],
   },
   ru: {
@@ -64,6 +69,7 @@ const translations: Record<string, {
       { label: "Политика конфиденциальности", href: "/legal/privacy" },
       { label: "Условия использования", href: "/legal/terms" },
       { label: "Свяжитесь с нами", href: "/contact" },
+      { label: "Запрос функции", href: "https://zerlo.featurebase.app/" },
     ],
   },
   hi: {
@@ -74,6 +80,7 @@ const translations: Record<string, {
       { label: "गोपनीयता नीति", href: "/legal/privacy" },
       { label: "उपयोग की शर्तें", href: "/legal/terms" },
       { label: "संपर्क करें", href: "/contact" },
+      { label: "सुविधा का अनुरोध", href: "https://zerlo.featurebase.app/" },
     ],
   },
 };

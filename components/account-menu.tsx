@@ -3,51 +3,51 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
 import { User } from "@supabase/supabase-js";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, User as UserIcon, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 // Translations for AccountMenu UI strings by language code
 const translations: Record<string, {
   chat: string;
   logout: string;
+  settings: string;
 }> = {
   en: {
     chat: "Chat",
     logout: "Log out",
+    settings: "Settings",
   },
   fr: {
     chat: "Chat",
     logout: "Se déconnecter",
+    settings: "Paramètres",
   },
   he: {
     chat: "צ'אט",
     logout: "התנתק",
+    settings: "הגדרות",
   },
   zh: {
     chat: "聊天",
     logout: "登出",
+    settings: "设置",
   },
   ar: {
     chat: "الدردشة",
     logout: "تسجيل الخروج",
+    settings: "الإعدادات",
   },
   ru: {
     chat: "Чат",
     logout: "Выйти",
+    settings: "Настройки",
   },
   hi: {
     chat: "चैट",
     logout: "लॉग आउट",
+    settings: "सेटिंग्स",
   },
 };
 
@@ -61,6 +61,7 @@ export default function AccountMenu({ user }: AccountMenuProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [language, setLanguage] = useState("en");
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     async function getProfile() {
@@ -95,6 +96,7 @@ export default function AccountMenu({ user }: AccountMenuProps) {
         }
       } catch (error) {
         console.error("Unexpected error fetching profile:", error);
+        setAvatarUrl(user.user_metadata?.avatar_url || null); // Fallback to metadata avatar
         setLanguage("en"); // Fallback to English on error
       }
     }
@@ -115,39 +117,57 @@ export default function AccountMenu({ user }: AccountMenuProps) {
   const currentTexts = translations[language] || translations.en;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="relative h-8 w-8">
-          <Avatar className="h-8 w-8 text-black/70">
-            {avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt={username || "User Avatar"} />
-            ) : (
-              <AvatarFallback>
-                <Image
-                  src="/assets/images/user.png"
-                  alt="Default User Avatar"
-                  width={23}
-                  height={23}
-                  className="w-[23px]"
-                />
-              </AvatarFallback>
-            )}
-          </Avatar>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-36 relative top-[-15px]" align="end" forceMount>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/chat">
-            <UserIcon className="mr-2 h-4 w-4 text-white" />
-            <span>{currentTexts.chat}</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4 text-white" />
-          <span>{currentTexts.logout}</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="relative">
+        <Avatar className="h-8 w-8 text-black/70 border-none" onClick={() => setIsOpen(!isOpen)}>
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={username || "User Avatar"} />
+          ) : (
+            <AvatarImage
+              src={user?.user_metadata?.avatar_url || `https://avatar.vercel.sh/${user?.email || 'default'}`}
+              style={{ borderRadius: "100%" }}
+              alt={user?.email || "User"}
+            />
+          )}
+        </Avatar>
+      {isOpen && (
+        <div
+          className="absolute right-0 w-48 bg-white rounded-lg z-50"
+          style={{
+            boxShadow:
+              "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+          }}
+        >
+          <div className="py-2">
+            <Link
+              href="/chat"
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2"
+              onClick={() => setIsOpen(false)}
+            >
+              <UserIcon className="h-4 w-4 text-gray-700" />
+              {currentTexts.chat}
+            </Link>
+            <Link href={'/settings'}>
+            <div
+              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4 text-gray-700" />
+              {currentTexts.settings}
+            </div>
+            </Link>
+            <div
+              onClick={() => {
+                setIsOpen(false);
+                handleSignOut();
+              }}
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4 text-gray-700" />
+              {currentTexts.logout}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

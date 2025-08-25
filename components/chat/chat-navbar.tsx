@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { DeployModal } from "./deploy-modal"
 import { ShareModal } from "./share-modal"
@@ -41,8 +41,9 @@ interface ChatNavbarProps {
 export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSocialClick }: ChatNavbarProps) {
   const [showDeployModal, setShowDeployModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const deployButtonRef = useRef<HTMLButtonElement>(null)
+  const shareButtonRef = useRef<HTMLButtonElement>(null)
 
-  // Debug logging
   useEffect(() => {
     const deployableMessages = messages.filter((msg) => msg.component_code && msg.sender === "ai")
     const hasDeployableMessages = deployableMessages.length > 0
@@ -62,11 +63,13 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
     const deployableMessages = messages.filter((msg) => msg.component_code && msg.sender === "ai")
     console.log("Deploy button clicked")
     console.log("Available deployable messages:", deployableMessages)
-    setShowDeployModal(true)
+    setShowShareModal(false) // Close ShareModal if open
+    setShowDeployModal((prev) => !prev) // Toggle DeployModal
   }
 
   const handleShareClick = () => {
-    setShowShareModal(true)
+    setShowDeployModal(false) // Close DeployModal if open
+    setShowShareModal((prev) => !prev) // Toggle ShareModal
   }
 
   const hasDeployableMessages = messages.filter((msg) => msg.component_code && msg.sender === "ai").length > 0
@@ -87,6 +90,7 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Button
+                    ref={deployButtonRef}
                     onClick={handleDeployClick}
                     variant="ghost"
                     size="icon"
@@ -116,6 +120,7 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Button
+                    ref={shareButtonRef}
                     onClick={handleShareClick}
                     variant="ghost"
                     size="icon"
@@ -249,8 +254,8 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
           </div>
         </div>
       </div>
-      <DeployModal isOpen={showDeployModal} onClose={() => setShowDeployModal(false)} messages={messages} />
-      <ShareModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} />
+      <DeployModal isOpen={showDeployModal} onClose={() => setShowDeployModal(false)} onOtherClose={() => setShowShareModal(false)} messages={messages} buttonRef={deployButtonRef} />
+      <ShareModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} onOtherClose={() => setShowDeployModal(false)} buttonRef={shareButtonRef} />
     </>
   )
 }
