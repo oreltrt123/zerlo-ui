@@ -383,10 +383,10 @@ export default function SettingsPage() {
     }
   }
 
-  const handlePremiumClick = () => {
-    console.log("Opening Premium Modal, isPremium:", isPremium)
-    setShowPremiumModal(true)
-  }
+  // const handlePremiumClick = () => {
+  //   console.log("Opening Premium Modal, isPremium:", isPremium)
+  //   setShowPremiumModal(true)
+  // }
 
   const closeModal = () => {
     console.log("Closing Premium Modal")
@@ -431,12 +431,12 @@ export default function SettingsPage() {
         </span>
       </div>
 
-      <div
+      {/* <div
         className="settings-item r2552esf25_252trewt3erblueFont bg-[#8888881A] hover:bg-[#88888813]"
         onClick={handlePremiumClick}
       >
         <span>{t.premium}</span>
-      </div>
+      </div> */}
 
       <div
         className="settings-item r2552esf25_252trewt3erblueFont bg-[#8888881A] hover:bg-[#88888813]"

@@ -221,8 +221,10 @@ export default function ModernChatPage() {
         },
       ])
 
-      // Navigate to the new chat with the message already sent
-      router.push(`/chat/${data.id}?autoSend=true`)
+      // Navigate to the new chat with the message as a query parameter
+      const encodedMessage = encodeURIComponent(message.trim())
+      router.push(`/chat/${data.id}?initialMessage=${encodedMessage}`)
+      setMessage("") // Clear the input after creating the chat
     } catch (error) {
       console.error("Error creating chat:", error)
     }

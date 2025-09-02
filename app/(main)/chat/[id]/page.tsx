@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import { Toaster, toast } from "sonner"
 import type { User } from "@supabase/supabase-js"
@@ -50,6 +50,7 @@ export default function ChatIdPage({ params }: PageProps) {
   const resolvedParams = React.use(params)
   const chatId = resolvedParams.id
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [user, setUser] = useState<User | null>(null)
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -61,8 +62,9 @@ export default function ChatIdPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [isComponentVisible, setIsComponentVisible] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
-  const [isChatHidden, setIsChatHidden] = useState(false) // New state to control chat visibility
+  const [isChatHidden, setIsChatHidden] = useState(false)
   const deployButtonRef = useRef<HTMLButtonElement>(null)
+  const hasSentInitialMessage = useRef(false)
 
   const chatPanelRef = useRef<HTMLDivElement>(null)
   const chatMessagesRef = useRef<HTMLDivElement>(null)
@@ -107,7 +109,7 @@ export default function ChatIdPage({ params }: PageProps) {
       setGeneratedComponent("")
       setEditMode(false)
       setIsAnimating(false)
-      setIsChatHidden(false) // Show chat when closing component
+      setIsChatHidden(false)
     }, 300)
   }, [])
 
@@ -540,6 +542,16 @@ export default function ChatIdPage({ params }: PageProps) {
   }
 
   const isGenerating = isLoadingChat || isLoadingComponent || isLoadingDiscuss || isLoadingSearch
+
+  // Handle initial message from chat page
+  useEffect(() => {
+    const initialMessage = searchParams.get("initialMessage")
+    if (initialMessage && !hasSentInitialMessage.current && !loading && chat && user) {
+      hasSentInitialMessage.current = true
+      setInputPrompt(decodeURIComponent(initialMessage))
+      handleSendMessage("default", selectedLanguage, false, [], false)
+    }
+  }, [searchParams, loading, chat, user, handleSendMessage, selectedLanguage])
 
   useEffect(() => {
     if (isLoadingChat && chatCompletionText) {
