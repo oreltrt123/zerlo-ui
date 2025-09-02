@@ -78,6 +78,8 @@ export default function ChatIdPage({ params }: PageProps) {
   const CHAT_INPUT_HEIGHT = 150
   const DIVIDER_HEIGHT = 4
 
+  const supabase = createClient()
+
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return
     const deltaY = e.clientY - startY.current
@@ -99,8 +101,6 @@ export default function ChatIdPage({ params }: PageProps) {
     document.body.style.cursor = ""
     document.body.style.userSelect = ""
   }, [handleMouseMove])
-
-  const supabase = createClient()
 
   const handleCloseComponent = useCallback(() => {
     setIsAnimating(true)
@@ -150,19 +150,24 @@ export default function ChatIdPage({ params }: PageProps) {
       if (messageContextRef.current) {
         const { aiMessageId } = messageContextRef.current
         const componentTitle = generateComponentTitle(messageContextRef.current.originalUserPrompt)
-        await saveMessageWithComponent(aiMessageId, completion, componentTitle)
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === aiMessageId
-              ? {
-                  ...msg,
-                  component_code: completion,
-                  component_title: componentTitle,
-                  isGeneratingComponent: false,
-                }
-              : msg,
-          ),
-        )
+        try {
+          await saveMessageWithComponent(aiMessageId, completion, componentTitle)
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageId
+                ? {
+                    ...msg,
+                    component_code: completion,
+                    component_title: componentTitle,
+                    isGeneratingComponent: false,
+                  }
+                : msg,
+            ),
+          )
+        } catch (error) {
+          console.error("Error saving component:", error)
+          toast.error("Failed to save component data.")
+        }
       }
     },
     onError: (err) => {
@@ -217,7 +222,7 @@ export default function ChatIdPage({ params }: PageProps) {
           }
         } catch (error) {
           console.error("Error saving AI message:", error)
-          toast.error("Error saving AI response")
+          toast.error("Error saving AI response.")
         }
       }
     },
@@ -251,7 +256,7 @@ export default function ChatIdPage({ params }: PageProps) {
           )
         } catch (error) {
           console.error("Error saving AI discuss message:", error)
-          toast.error("Error saving AI response")
+          toast.error("Error saving AI response.")
         }
       }
     },
@@ -285,7 +290,7 @@ export default function ChatIdPage({ params }: PageProps) {
           )
         } catch (error) {
           console.error("Error saving AI search message:", error)
-          toast.error("Error saving AI response")
+          toast.error("Error saving AI response.")
         }
       }
     },
@@ -310,7 +315,7 @@ export default function ChatIdPage({ params }: PageProps) {
         .order("created_at", { ascending: true })
       if (error) {
         console.error("Error loading messages:", error)
-        throw error
+        throw new Error(`Failed to load messages: ${error.message}`)
       }
       console.log("Loaded messages from database:", data)
       const loadedMessages: Message[] = data.map((msg) => ({
@@ -333,7 +338,7 @@ export default function ChatIdPage({ params }: PageProps) {
       }
     } catch (error) {
       console.error("Error loading messages:", error)
-      toast.error("Error loading messages")
+      toast.error("Failed to load chat messages. Please try again.")
     }
   }, [chatId, supabase])
 
@@ -341,26 +346,44 @@ export default function ChatIdPage({ params }: PageProps) {
     try {
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser()
 
-      if (!user) {
+      if (userError || !user) {
+        console.error("Error fetching user:", userError)
+        toast.error("Authentication failed. Please log in again.")
         router.push("/login")
         return
       }
 
       setUser(user)
 
-      const { data: chatData, error: chatError } = await supabase.from("chats").select("*").eq("id", chatId).single()
-      if (chatError) {
-        console.error("Error fetching chat:", chatError)
-        throw chatError
-      }
-      setChat(chatData)
+      const { data: chatData, error: chatError } = await supabase
+        .from("chats")
+        .select("*")
+        .eq("id", chatId)
+        .single()
 
+      if (chatError || !chatData) {
+        console.error("Error fetching chat:", chatError || "Chat not found")
+        toast.error("Chat not found or you don't have access.")
+        router.push("/chat")
+        return
+      }
+
+      if (chatData.user_id !== user.id) {
+        console.error("Access denied: User does not own this chat")
+        toast.error("You don't have permission to access this chat.")
+        router.push("/chat")
+        return
+      }
+
+      setChat(chatData)
       await loadMessages()
     } catch (error) {
       console.error("Error initializing chat:", error)
-      toast.error("Error loading chat")
+      toast.error("Failed to load chat data. Please try again later.")
+      router.push("/chat")
     } finally {
       setLoading(false)
     }
@@ -382,7 +405,7 @@ export default function ChatIdPage({ params }: PageProps) {
         .single()
       if (error) {
         console.error("Error inserting message:", error)
-        throw error
+        throw new Error(`Failed to save message: ${error.message}`)
       }
       console.log("Message saved with ID:", data.id)
       await supabase.from("chats").update({ updated_at: new Date().toISOString() }).eq("id", chatId)
@@ -412,7 +435,7 @@ export default function ChatIdPage({ params }: PageProps) {
           toast.error("Database needs to be updated. Please run the migration script.")
           return
         }
-        throw error
+        throw new Error(`Failed to update message with component: ${error.message}`)
       }
       console.log("Message updated successfully:", data)
     } catch (error) {
@@ -502,7 +525,7 @@ export default function ChatIdPage({ params }: PageProps) {
       }
     } catch (error) {
       console.error("Error in handleSendMessage:", error)
-      toast.error("Error sending message")
+      toast.error("Error sending message. Please try again.")
       setMessages((prev) => prev.filter((msg) => msg.id !== tempUserMessageId && msg.id !== tempAiMessageId))
     }
   }
@@ -548,7 +571,8 @@ export default function ChatIdPage({ params }: PageProps) {
     const initialMessage = searchParams.get("initialMessage")
     if (initialMessage && !hasSentInitialMessage.current && !loading && chat && user) {
       hasSentInitialMessage.current = true
-      setInputPrompt(decodeURIComponent(initialMessage))
+      const decodedMessage = decodeURIComponent(initialMessage)
+      setInputPrompt(decodedMessage)
       handleSendMessage("default", selectedLanguage, false, [], false)
     }
   }, [searchParams, loading, chat, user, handleSendMessage, selectedLanguage])
@@ -636,8 +660,13 @@ export default function ChatIdPage({ params }: PageProps) {
             user={user}
             showLogin={() => router.push("/login")}
             signOut={async () => {
-              await supabase.auth.signOut()
-              router.push("/login")
+              try {
+                await supabase.auth.signOut()
+                router.push("/login")
+              } catch (error) {
+                console.error("Error signing out:", error)
+                toast.error("Failed to sign out. Please try again.")
+              }
             }}
             onSocialClick={(target: "github" | "x" | "discord") => {
               const urls = {
@@ -727,8 +756,8 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
       const selectedMessage = messages.find((msg) => msg.id === selectedMessageId)
       if (!selectedMessage?.component_code) throw new Error("Selected message has no component code")
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("User not authenticated")
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) throw new Error("User not authenticated")
 
       const { data: existingSite } = await supabase
         .from("deployed_sites")
@@ -756,7 +785,7 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
         .select()
         .single()
 
-      if (error) throw error
+      if (error) throw new Error(`Failed to deploy site: ${error.message}`)
 
       const response = await fetch("/api/deploy", {
         method: "POST",
@@ -768,7 +797,10 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
         }),
       })
 
-      if (!response.ok) throw new Error("Failed to deploy site")
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`Failed to deploy site: ${errorData.message || "Unknown error"}`)
+      }
 
       await response.json()
       toast.success(`Site deployed successfully! Visit: zerlo.online.${siteName}`)
