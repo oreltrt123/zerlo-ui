@@ -836,7 +836,7 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
         />
         <p className="text-xs text-gray-500">{siteName || "NameSite"}.zerlo.online</p>
 
-        <Label>Select Component</Label>
+        <Label>Select Component to deploy</Label>
         <RadioGroup value={selectedMessageId} onValueChange={setSelectedMessageId} className="space-y-1">
           {deployableMessages.length === 0 ? (
             <p className="text-xs text-gray-500">No deployable components.</p>
