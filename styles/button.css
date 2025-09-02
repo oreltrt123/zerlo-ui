@@ -97,23 +97,3 @@
     transform: rotate(360deg);
   }
 }
-
-/* Responsive design for mobile game interfaces */
-@media (max-width: 768px) {
-  .game-button {
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-
-  .r2552esf25_252trewt3erblueFontDocs {
-    font-size: 12px;
-  }
-}
-
-/* Dark mode support for professional games */
-@media (prefers-color-scheme: dark) {
-  .r2552esf25_252trewt3erblueFontDocs:hover {
-    background-color: rgba(59, 130, 246, 0.2);
-    color: rgb(96, 165, 250);
-  }
-}

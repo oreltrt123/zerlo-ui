@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import { ChatMessages } from "@/components/chat/chat-messages"
@@ -8,7 +8,7 @@ import { ComponentPreview } from "@/components/chat/component-preview"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
-
+import { useRef } from "react"
 interface Message {
   id: string
   sender: "user" | "ai"
@@ -32,11 +32,24 @@ export default function SharedChatPage() {
   const [chat, setChat] = useState<SharedChat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
-  const [viewMode, setViewMode] = useState<"preview" | "code">("preview")
+  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings">("preview")
+  const [editMode, setEditMode] = useState<boolean>(false)
+  const [isComponentVisible, setIsComponentVisible] = useState<boolean>(false)
+  const [isAnimating, setIsAnimating] = useState<boolean>(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  const deployButtonRef = useRef<HTMLButtonElement | null>(null)
   const supabase = createClient()
+
+  const handleCloseComponent = useCallback(() => {
+    setIsAnimating(true)
+    setTimeout(() => {
+      setIsComponentVisible(false)
+      setGeneratedComponent("")
+      setEditMode(false)
+      setIsAnimating(false)
+    }, 300)
+  }, [])
 
   useEffect(() => {
     const loadSharedChat = async () => {
@@ -83,6 +96,7 @@ export default function SharedChatPage() {
         if (messagesWithComponents.length > 0) {
           const lastMessageWithComponent = messagesWithComponents[messagesWithComponents.length - 1]
           setGeneratedComponent(lastMessageWithComponent.component_code)
+          setIsComponentVisible(true)
         }
       } catch (error) {
         console.error("Error loading shared chat:", error)
@@ -98,14 +112,8 @@ export default function SharedChatPage() {
   const handleRestoreComponent = (componentCode: string) => {
     setGeneratedComponent(componentCode)
     setViewMode("preview")
+    setIsComponentVisible(true)
   }
-
-  // const handleCopyCode = () => {
-  //   if (generatedComponent && chat?.allow_copy) {
-  //     navigator.clipboard.writeText(generatedComponent)
-  //     // Could add toast here if available
-  //   }
-  // }
 
   if (loading) {
     return (
@@ -165,8 +173,12 @@ export default function SharedChatPage() {
       {/* Main Content */}
       <div className="flex w-full pt-16">
         {/* Left: Chat Messages */}
-        <div className="w-1/2 flex flex-col border-r border-slate-200 bg-white shadow-lg">
-          <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div
+          className={`flex flex-col transition-all duration-300 ease-in-out ${
+            isComponentVisible && !isAnimating ? "w-1/2" : "w-full max-w-4xl mx-auto"
+          }`}
+        >
+          <div className="flex-1 overflow-y-auto px-4 py-6 bg-white shadow-lg border-r border-slate-200">
             <div className="max-w-2xl mx-auto w-full">
               <ChatMessages messages={messages} onRestoreComponent={handleRestoreComponent} />
             </div>
@@ -180,13 +192,23 @@ export default function SharedChatPage() {
         </div>
 
         {/* Right: Component Preview */}
-        <div className="w-1/2 flex flex-col bg-white shadow-lg overflow-hidden">
-          <ComponentPreview
-            generatedComponent={generatedComponent}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-          />
-        </div>
+        {isComponentVisible && (
+          <div
+            className={`w-1/2 flex flex-col bg-white shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${
+              isAnimating ? "opacity-0 translate-x-full" : "opacity-100 translate-x-0"
+            }`}
+          >
+            <ComponentPreview
+              generatedComponent={generatedComponent}
+              setGeneratedComponent={setGeneratedComponent}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              onCloseComponent={handleCloseComponent}
+              editMode={editMode}
+              deployButtonRef={deployButtonRef}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

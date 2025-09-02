@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Zap, Code, Gamepad2, Server, Rocket, Users, Globe } from "lucide-react"
 import Footer from "@/components/sections/footer";
 import Navbar from "@/components/navbar";
+import { Component } from "@/components/ui/animated-background"
+import "@/styles/about.css"
 
 // Translations for all supported languages
 const translations: Record<
@@ -650,85 +652,123 @@ export default async function AboutPage() {
   const t = translations[language] || translations.en
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
     <Navbar />
+    
       {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
+<div className="relative w-full min-h-screen flex items-center justify-center">
+  {/* Background Component */}
+  <div className="absolute inset-0 z-0">
+    <Component />
+  </div>
 
-            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6">{t.hero.title}</h1>
+  {/* Foreground Content */}
+  <section className="relative z-10 w-full px-4">
+    <div className="max-w-4xl mx-auto text-center bg-white/90 p-8 rounded-2xl">
+      <h1 className="text-6xl md:text-7xl font-bold text-black/80 mb-10 top-[-10px] relative">
+        {t.hero.title}
+      </h1>
 
-            <p className="text-xl text-gray-500 mb-8 max-w-3xl mx-auto leading-relaxed font-bold">{t.hero.description}</p>
+      <p className='h1--scalingSize text-black/80 mt-[-30px] relative top-[-14px] mb-[5px]' data-text='An awesome title'>
+        {t.hero.description}
+      </p>
 
-            <div className="flex flex-wrap justify-center gap-3 mb-12">
-              <Badge variant="secondary" className="bg-[#8888881A] text-gray-800 border-[#8888881A]">
-                <Zap className="w-3 h-3 mr-1" />
-                {t.hero.badges.fast}
-              </Badge>
-              <Badge variant="secondary" className="bg-[#8888881A] text-gray-800 border-[#8888881A]">
-                <Code className="w-3 h-3 mr-1" />
-                {t.hero.badges.aiPowered}
-              </Badge>
-              <Badge variant="secondary" className="bg-[#8888881A] text-gray-800 border-[#8888881A]">
-                <Gamepad2 className="w-3 h-3 mr-1" />
-                {t.hero.badges.gamesAndSites}
-              </Badge>
+      <div className="flex flex-wrap justify-center gap-3">
+        <Badge
+          variant="secondary"
+          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-black/50 border-none"
+        >
+          <Zap className="w-3 h-3 mr-1" />
+          {t.hero.badges.fast}
+        </Badge>
+
+        <Badge
+          variant="secondary"
+          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-black/50 border-none"
+        >
+          <Code className="w-3 h-3 mr-1" />
+          {t.hero.badges.aiPowered}
+        </Badge>
+
+        <Badge
+          variant="secondary"
+          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-black/50 border-none"
+        >
+          <Gamepad2 className="w-3 h-3 mr-1" />
+          {t.hero.badges.gamesAndSites}
+        </Badge>
+      </div>
+    </div>
+  </section>
+</div>
+
+{/* Mission Section */}
+<section className="relative z-[99999] py-20 bg-gray-100">
+  <div className="container mx-auto px-4">
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-16">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          {t.mission.title}
+        </h2>
+        <p className="text-lg leading-relaxed h1--scalingSize text-black/80 ">
+          {t.mission.description}
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-8">
+        <Card className="bg-white border-[#8888881A] transition-shadow">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-[#8888881A] rounded-xl mx-auto mb-6 flex items-center justify-center">
+              <Globe className="w-8 h-8 text-gray-600" />
             </div>
-          </div>
-        </div>
-      </section>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              {t.mission.cards.globalImpact.title}
+            </h3>
+            <p className="text-gray-600">
+              {t.mission.cards.globalImpact.description}
+            </p>
+          </CardContent>
+        </Card>
 
-      {/* Mission Section */}
-      <section className="py-20 bg-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{t.mission.title}</h2>
-              <p className="text-lg text-gray-600 leading-relaxed font-bold">{t.mission.description}</p>
+        <Card className="bg-white border-[#8888881A] transition-shadow">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-[#8888881A] rounded-xl mx-auto mb-6 flex items-center justify-center">
+              <Rocket className="w-8 h-8 text-gray-600" />
             </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              {t.mission.cards.innovationFirst.title}
+            </h3>
+            <p className="text-gray-600">
+              {t.mission.cards.innovationFirst.description}
+            </p>
+          </CardContent>
+        </Card>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <Card className="bg-white border-[#8888881A] transition-shadow">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-[#8888881A] rounded-xl mx-auto mb-6 flex items-center justify-center">
-                    <Globe className="w-8 h-8 text-gray-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{t.mission.cards.globalImpact.title}</h3>
-                  <p className="text-gray-600">{t.mission.cards.globalImpact.description}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border-[#8888881A] transition-shadow">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-[#8888881A] rounded-xl mx-auto mb-6 flex items-center justify-center">
-                    <Rocket className="w-8 h-8 text-gray-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{t.mission.cards.innovationFirst.title}</h3>
-                  <p className="text-gray-600">{t.mission.cards.innovationFirst.description}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border-[#8888881A] transition-shadow">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-[#8888881A] rounded-xl mx-auto mb-6 flex items-center justify-center">
-                    <Users className="w-8 h-8 text-gray-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{t.mission.cards.communityDriven.title}</h3>
-                  <p className="text-gray-600">{t.mission.cards.communityDriven.description}</p>
-                </CardContent>
-              </Card>
+        <Card className="bg-white border-[#8888881A] transition-shadow">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-[#8888881A] rounded-xl mx-auto mb-6 flex items-center justify-center">
+              <Users className="w-8 h-8 text-gray-600" />
             </div>
-          </div>
-        </div>
-      </section>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              {t.mission.cards.communityDriven.title}
+            </h3>
+            <p className="text-gray-600">
+              {t.mission.cards.communityDriven.description}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</section>
+
 
       {/* Team Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.team.title}</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">{t.team.subtitle}</p>
+            <p className="text-lg max-w-2xl mx-auto h1--scalingSize text-black/80 ">{t.team.subtitle}</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
@@ -778,7 +818,7 @@ export default async function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.technology.title}</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">{t.technology.subtitle}</p>
+            <p className="text-lg h1--scalingSize text-black/80 max-w-3xl mx-auto">{t.technology.subtitle}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">

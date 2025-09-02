@@ -1,12 +1,12 @@
 "use client"
 import { useState } from "react"
-import { MoreHorizontal, Edit3, Trash2, Check, Loader2 } from "lucide-react"
+import { MoreHorizontal, Edit3, Trash2, Check, Loader2, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import Image from "next/image"
+import "@/styles/button.css"
 
 interface Message {
   id: string
@@ -94,6 +94,11 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
     toast.success("Message copied to clipboard!")
   }
 
+  const handleCopyMessage = (content: string) => {
+    navigator.clipboard.writeText(content)
+    toast.success("Message copied!")
+  }
+
   const internalHandleRestoreComponent = (componentCode: string) => {
     handleRestoreComponent(componentCode, onRestoreComponent)
   }
@@ -106,9 +111,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
             <div className="relative max-w-[80%]">
               <div
                 className="p-3 rounded-lg bg-background text-[#0d0d0db6] dark:text-white"
-                style={{
-                  fontSize: "13px",
-                }}
+                style={{ fontSize: "13px" }}
               >
                 Hello, I&apos;m your AI. I can build anything you want, like games, dimensions, and things like that.
               </div>
@@ -116,32 +119,38 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
             </div>
           </div>
         ) : null}
+
         {messages.map((msg) => (
           <div key={msg.id}>
             <div
               className={`group flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-              style={{
-                fontSize: "13px",
-              }}
+              style={{ fontSize: "13px" }}
             >
               <div className="relative max-w-[80%]">
                 {editingMessageId === msg.id ? (
-                  <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
-                    <Input
+                  <div className="flex flex-col p-3 bg-[#E9E9E980] dark:bg-[#8888881A] text-[#0d0d0ddc] dark:text-white rounded-lg w-[150%] max-w-lg">
+                    <textarea
                       value={editingContent}
                       onChange={(e) => setEditingContent(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault()
                           handleSaveEdit()
                         } else if (e.key === "Escape") {
                           setEditingMessageId(null)
                           setEditingContent("")
                         }
                       }}
-                      className="flex-1"
+                      className="w-full h-14 resize-none border-none outline-none p-4 bg-transparent placeholder-gray-400 text-gray-900"
                       autoFocus
+                      placeholder="Edit your message..."
                     />
-                    <Button size="sm" onClick={handleSaveEdit} className="bg-blue-500 text-white">
+
+                    <Button
+                      size="sm"
+                      onClick={handleSaveEdit}
+                      className="mt-4 bg-[#0099ffb2] hover:bg-[#0099ffbe] text-white w-24 self-end"
+                    >
                       Save
                     </Button>
                   </div>
@@ -160,29 +169,33 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
 
                     {/* Message Actions */}
                     <div
-                      className={`${msg.sender === "user" ? "absolute top-2 left-[-40px]" : "flex justify-end mt-2 mr-2"} opacity-0 group-hover:opacity-100 transition-opacity`}
+                      className={`${
+                        msg.sender === "user"
+                          ? "absolute top-2 left-[-40px]"
+                          : "flex justify-end mt-2 mr-2"
+                      } opacity-0 group-hover:opacity-100 transition-opacity`}
                     >
                       {msg.sender === "user" ? (
-                        // User message actions
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600">
                               <MoreHorizontal className="h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-32 bg-white"
-                            style={{
-                              boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
-                            }}
-                          >
+                          <DropdownMenuContent align="end" className="w-32 bg-white">
                             <DropdownMenuItem
                               onClick={() => handleEditMessage(msg.id, msg.content)}
                               className="hover:bg-gray-50 text-muted-foreground hover:text-muted-foreground"
                             >
                               <Edit3 className="h-3 w-3 mr-2" />
                               Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleCopyMessage(msg.content)}
+                              className="hover:bg-gray-50 text-muted-foreground hover:text-muted-foreground"
+                            >
+                              <Copy className="h-3 w-3 mr-2" />
+                              Copy
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteMessage()}
@@ -257,12 +270,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                                   onClick={() => internalHandleRestoreComponent(msg.component_code!)}
                                   className="h-6 w-6 p-0 text-gray-400 hover:text-orange-600"
                                 >
-                                  <Image
-                                    src="/assets/images/restore.png"
-                                    alt="Restore Component"
-                                    width={16}
-                                    height={16}
-                                  />
+                                  <Image src="/assets/images/restore.png" alt="Restore Component" width={16} height={16} />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Restore Component</TooltipContent>
@@ -279,7 +287,12 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
             {msg.sender === "ai" && (msg.component_code || msg.isGeneratingComponent) && (
               <div className="flex justify-start mt-3">
                 <div className="max-w-[80%]">
-                  <div className="bg-white dark:bg-[#303030] border dark:border-[#444444] rounded-lg p-4 shadow-sm">
+                  <div
+                    className="bg-white dark:bg-[#303030] rounded-lg p-4"
+                    style={{
+                      boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">

@@ -5,6 +5,8 @@ import DynamicSandbox from "@/components/DynamicSandbox"
 
 interface GeneratedPreviewProps {
   code: string
+  editMode: boolean
+  setGeneratedComponent: (code: string) => void
 }
 
 function stripMarkdownFences(raw: string) {
@@ -13,9 +15,9 @@ function stripMarkdownFences(raw: string) {
   return s
 }
 
-const GeneratedPreview: React.FC<GeneratedPreviewProps> = ({ code }) => {
+const GeneratedPreview: React.FC<GeneratedPreviewProps> = ({ code, editMode, setGeneratedComponent }) => {
   const html = useMemo(() => stripMarkdownFences(code), [code])
-  return <DynamicSandbox html={html} />
+  return <DynamicSandbox html={html} editMode={editMode} setGeneratedComponent={setGeneratedComponent} />
 }
 
 export default GeneratedPreview

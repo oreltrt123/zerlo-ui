@@ -71,35 +71,13 @@ export default async function Navbar() {
 
   return ( 
     <nav className="fixed top-0 left-0 right-0 z-50"> 
-      <div className="bg-[#ffffff] backdrop-blur-md px-6 py-3 flex items-center justify-between  mx-auto"> 
+      <div className="bg-[#ffffff] border-b backdrop-blur-md px-6 py-3 flex items-center justify-between  mx-auto"> 
         {/* Logo Section */} 
         <div className="flex items-center"> 
-          <Link href="/"> 
+          <Link href="/docs"> 
             <h1 className="text-2xl font-bold relative top-[-2px] text-black/70 cursor-default"> 
-              {currentTexts.logo} 
+              {currentTexts.logo} <span style={{fontSize: "16px"}}>Docs</span>
             </h1> 
-          </Link> 
-        </div> 
-
-        {/* Centered Navigation Links */} 
-        <div className="flex-1 flex justify-center gap-6"> 
-          <Link 
-            href="/" 
-            className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-default" 
-          > 
-            {currentTexts.blog} 
-          </Link> 
-          <Link 
-            href="/about" 
-            className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-default" 
-          > 
-            {currentTexts.about} 
-          </Link> 
-          <Link 
-            href="/features" 
-            className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-default" 
-          > 
-            {currentTexts.features} 
           </Link> 
         </div> 
 

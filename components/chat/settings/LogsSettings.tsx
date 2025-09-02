@@ -37,7 +37,7 @@ export default function LogsSettings({ chatId }: LogsSettingsProps) {
   }, [fetchLogs])
 
   return (
-    <div className="bg-white dark:bg-[#1a1d24] p-4 rounded-lg shadow-sm">
+    <div className="bg-white dark:bg-[#303030] p-4 rounded-lg">
       <h3 className="text-lg font-semibold mb-2">Logs</h3>
       {logs.length > 0 ? (
         <ul className="space-y-2">

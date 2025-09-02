@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import countryCodes from "@/context/country"
+import "@/styles/button.css"
 
 const styles = `
   .account-settings {
@@ -51,7 +53,7 @@ const styles = `
     right: 0;
     max-height: 200px;
     overflow-y: auto;
-    background-color: #e9e6e6bd;
+    background-color: white;
     border: 1px solid #8888881A;
     border-radius: 4px;
     z-index: 10;
@@ -59,7 +61,7 @@ const styles = `
   }
   .dropdown-item {
     padding: 8px;
-    cursor: default;
+    cursor: defult;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -73,7 +75,7 @@ const styles = `
     color: #fff;
     border: none;
     border-radius: 4px;
-    cursor: default;
+    cursor: pointer;
   }
   .form-group button:hover {
     background-color: #00ccff;
@@ -84,9 +86,8 @@ const styles = `
     color: #fff;
     border: none;
     border-radius: 4px;
-    cursor: default;
+    cursor: pointer;
     outline: none;
-    padding: 4px 8px;
     margin-bottom: 15px;
     width: 300px;
     font-size: 12px;
@@ -96,6 +97,27 @@ const styles = `
   }
   .save-button:hover {
     background-color: #00ccff;
+  }
+  .api-key-section {
+    margin-top: 20px;
+    width: 300px;
+  }
+  .api-key-input {
+    background: #f0f0f0;
+    color: #333;
+    font-family: monospace;
+  }
+  .copy-button, .regenerate-button {
+    margin-top: 10px;
+    margin-right: 10px;
+    background-color: #0099ff;
+    color: #fff;
+  }
+  .regenerate-button {
+    background-color: #ff4444;
+  }
+  .regenerate-button:hover {
+    background-color: #ff6666;
   }
 `
 
@@ -110,6 +132,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "Failed to save settings: ",
     permissionDenied: "Permission denied. Please ensure your account has the correct permissions or contact support.",
     bucketIssue: "Storage bucket issue. Please try again or contact support.",
+    apiKeyLabel: "Your API Key (copy and store securely)",
+    apiKeyExists: "API key already generated (masked for security). Regenerate to get a new key.",
   },
   fr: {
     title: "Paramètres du compte",
@@ -121,6 +145,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "Échec de l'enregistrement des paramètres : ",
     permissionDenied: "Permission refusée. Veuillez vérifier les permissions de votre compte ou contacter le support.",
     bucketIssue: "Problème de stockage. Veuillez réessayer ou contacter le support.",
+    apiKeyLabel: "Votre clé API (copiez et stockez en toute sécurité)",
+    apiKeyExists: "Clé API déjà générée (masquée pour la sécurité). Régénérez pour obtenir une nouvelle clé.",
   },
   ru: {
     title: "Настройки аккаунта",
@@ -132,6 +158,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "Ошибка сохранения настроек: ",
     permissionDenied: "Доступ запрещен. Проверьте права или свяжитесь с поддержкой.",
     bucketIssue: "Проблема с хранилищем. Попробуйте позже или обратитесь в поддержку.",
+    apiKeyLabel: "Ваш API ключ (скопируйте и храните безопасно)",
+    apiKeyExists: "API ключ уже создан (скрыт для безопасности). Сгенерируйте новый ключ.",
   },
   hi: {
     title: "खाता सेटिंग्स",
@@ -143,6 +171,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "सेटिंग्स सहेजने में विफल: ",
     permissionDenied: "अनुमति अस्वीकृत। कृपया अपने खाते की अनुमतियां जांचें या समर्थन से संपर्क करें।",
     bucketIssue: "भंडारण समस्या। कृपया पुनः प्रयास करें या सहायता से संपर्क करें।",
+    apiKeyLabel: "आपकी API कुंजी (कॉपी करें और सुरक्षित रखें)",
+    apiKeyExists: "API कुंजी पहले से उत्पन्न हो चुकी है (सुरक्षा के लिए छिपाई गई)। नई कुंजी के लिए पुनर्जनन करें।",
   },
   zh: {
     title: "账户设置",
@@ -154,6 +184,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "保存设置失败：",
     permissionDenied: "权限被拒绝。请检查账户权限或联系支持。",
     bucketIssue: "存储问题。请重试或联系支持。",
+    apiKeyLabel: "您的API密钥（复制并安全存储）",
+    apiKeyExists: "API密钥已生成（为安全起见已隐藏）。请重新生成以获取新密钥。",
   },
   ar: {
     title: "إعدادات الحساب",
@@ -165,6 +197,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "فشل حفظ الإعدادات: ",
     permissionDenied: "تم رفض الإذن. يرجى التحقق من أذونات حسابك أو الاتصال بالدعم.",
     bucketIssue: "مشكلة في التخزين. الرجاء المحاولة مرة أخرى أو الاتصال بالدعم.",
+    apiKeyLabel: "مفتاح API الخاص بك (انسخه واحفظه بأمان)",
+    apiKeyExists: "تم إنشاء مفتاح API بالفعل (مخفي للأمان). أعد الإنشاء للحصول على مفتاح جديد.",
   },
   he: {
     title: "הגדרות חשבון",
@@ -176,6 +210,8 @@ const translations: Record<string, Record<string, string>> = {
     settingsSaveFailed: "שמירת ההגדרות נכשלה: ",
     permissionDenied: "ההרשאה נדחתה. אנא בדוק את ההרשאות שלך או פנה לתמיכה.",
     bucketIssue: "בעיה באחסון. נסה שוב או פנה לתמיכה.",
+    apiKeyLabel: "מפתח ה-API שלך (העתק ושמור במקום בטוח)",
+    apiKeyExists: "מפתח API כבר נוצר (מוסתר מטעמי אבטחה). צור מחדש לקבלת מפתח חדש.",
   },
 }
 
@@ -187,40 +223,90 @@ export default function AccountSettingsPage() {
   const [selectedCountryCode, setSelectedCountryCode] = useState("+1")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [language, setLanguage] = useState("en")
+  const [apiKey, setApiKey] = useState<string | null>(null)
+  const [isKeyMasked, setIsKeyMasked] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
   const getUser = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error || !user) {
+        console.error('Auth error:', error?.message || 'No user found')
+        router.push("/login")
+        return
+      }
       setUser(user)
+      console.log('User identities:', user.identities) // Debug
 
-      if (user) {
-        const lang = user.user_metadata?.language || "en"
-        setLanguage(lang)
+      const lang = user.user_metadata?.language || "en"
+      setLanguage(lang)
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, phone, avatar_url')
-          .eq('id', user.id)
-          .single()
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, phone, avatar_url')
+        .eq('id', user.id)
+        .single()
 
-        const defaultName = user.email ? user.email.split('@')[0] : "unknown"
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Profile fetch error:', profileError.message)
+        return
+      }
 
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            id: user.id,
-            full_name: defaultName
+      const defaultName = user.email ? user.email.split('@')[0] : "unknown"
+
+      if (!profile) {
+        const { error: insertError } = await supabase.from('profiles').insert({
+          id: user.id,
+          full_name: defaultName
+        })
+        if (insertError) {
+          console.error('Profile insert error:', {
+            message: insertError.message,
+            code: insertError.code,
+            details: insertError.details,
+            hint: insertError.hint
           })
+        } else {
           console.log("Initial profile created for user:", user.id)
         }
+      }
 
-        setUsername(profile?.full_name || defaultName || "")
-        setPhone(profile?.phone || "")
-        if (profile?.phone) {
-          const country = countryCodes.find(c => profile.phone.startsWith(c.dial_code))
-          setSelectedCountryCode(country?.dial_code || "+1")
+      setUsername(profile?.full_name || defaultName || "")
+      setPhone(profile?.phone || "")
+      if (profile?.phone) {
+        const country = countryCodes.find(c => profile.phone?.startsWith(c.dial_code))
+        setSelectedCountryCode(country?.dial_code || "+1")
+      }
+
+      // API key logic - always fetch or generate
+      const { data: apiKeyData, error: keyError } = await supabase
+        .from('api_keys')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (keyError && keyError.code !== 'PGRST116') {
+        console.error('API key fetch error:', keyError.message)
+        return
+      }
+
+      if (apiKeyData) {
+        setApiKey('sk_******************************')
+        setIsKeyMasked(true)
+      } else {
+        const response = await fetch('/api/generate-apikey', { method: 'POST' })
+        if (response.ok) {
+          const { apiKey: newKey, error } = await response.json()
+          if (error) {
+            console.error('API key generation error:', error)
+          } else {
+            setApiKey(newKey)
+          }
+        } else {
+          const error = await response.json()
+          console.error('API key fetch failed:', error)
         }
       }
     } catch (error) {
@@ -228,7 +314,7 @@ export default function AccountSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [supabase, router])
 
   const createBucketIfNotExists = useCallback(async () => {
     try {
@@ -239,12 +325,37 @@ export default function AccountSettingsPage() {
         await new Promise(resolve => setTimeout(resolve, 2000))
         console.log("Bucket 'avatars' should be ready now.")
       } else if (error) {
-        throw error
+        console.error('Bucket error:', error.message)
       }
     } catch (error) {
       console.error("Error managing bucket:", error)
     }
   }, [supabase])
+
+  const handleRegenerateApiKey = async () => {
+    try {
+      const response = await fetch('/api/regenerate-apikey', { method: 'POST' })
+      if (response.ok) {
+        const { apiKey: newKey, error } = await response.json()
+        if (error) {
+          console.error('API key regeneration error:', error)
+          alert('Failed to regenerate API key: ' + error)
+        } else {
+          setApiKey(newKey)
+          setIsKeyMasked(false)
+          alert('New API key generated and copied to clipboard!')
+          navigator.clipboard.writeText(newKey)
+        }
+      } else {
+        const error = await response.json()
+        console.error('API key regeneration failed:', error)
+        alert('Failed to regenerate API key: ' + error.error)
+      }
+    } catch (error) {
+      console.error('Regeneration request failed:', error)
+      alert('Error regenerating API key: ' + (error as Error).message)
+    }
+  }
 
   useEffect(() => {
     getUser()
@@ -257,7 +368,6 @@ export default function AccountSettingsPage() {
         setIsDropdownOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
@@ -304,6 +414,15 @@ export default function AccountSettingsPage() {
     }
   }
 
+  const handleCopyApiKey = () => {
+    if (apiKey && !isKeyMasked) {
+      navigator.clipboard.writeText(apiKey)
+      alert('API key copied to clipboard!')
+    } else {
+      alert('Cannot copy masked key. Use Regenerate to get a new key.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -313,8 +432,7 @@ export default function AccountSettingsPage() {
   }
 
   if (!user) {
-    router.push("/login")
-    return null
+    return null // Router redirect handled in getUser
   }
 
   const t = translations[language] || translations.en
@@ -340,14 +458,19 @@ export default function AccountSettingsPage() {
             onChange={handlePhoneChange}
           />
           <button
-            className="dropdown-button"
+            className="dropdown-button r2552esf25_252trewt3erblueFontDocs"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
             ▼
           </button>
         </div>
         {isDropdownOpen && (
-          <div className="dropdown-menu">
+          <div
+          className="dropdown-menu"
+          style={{
+            boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+          }}
+          >
             {countryCodes.map((country) => (
               <div
                 key={country.code}
@@ -361,6 +484,22 @@ export default function AccountSettingsPage() {
           </div>
         )}
       </div>
+      {apiKey && (
+        <div className="api-key-section form-group">
+          <label>{isKeyMasked ? t.apiKeyExists : t.apiKeyLabel}</label>
+          <Input
+            type="text"
+            value={apiKey}
+            readOnly
+          />
+          <Button className="copy-button r2552esf25_252trewt3erblueFontDocs" onClick={handleCopyApiKey}>
+            Copy API Key
+          </Button>
+          <Button className="regenerate-button r2552esf25_252trewt3erblueFontDocs" onClick={handleRegenerateApiKey}>
+            Regenerate
+          </Button>
+        </div>
+      )}
       <button className="save-button" onClick={handleSave}>{t.saveButton}</button>
       <button className="form-group button r2552esf25_252trewt3er" onClick={() => router.push("/settings/password")}>
         {t.changePassword}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test366</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        }
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+        
+        // Define the component
+        function Component() {
+            ```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zerlo Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #222; color: #eee; }
+        #lobby {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="lobby">
+        <h1>Welcome to Zerlo's Game!</h1>
+        <button id="playButton">Play</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+        const lobbyDiv = document.getElementById("lobby");
+        const playButton = document.getElementById("playButton");
+
+        let scene;
+
+        const createScene = function () {
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.lowerRadiusLimit = 5;
+            camera.upperRadiusLimit = 50;
+            camera.wheelPrecision = 50;
+
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.7;
+
+            const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, scene);
+            const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
+            groundMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+            ground.material = groundMaterial;
+
+            // Placeholder for Meshy model
+            const placeholder = BABYLON.MeshBuilder.CreateBox("placeholder", { size: 2 }, scene);
+            placeholder.position.y = 1;
+            const placeholderMaterial = new BABYLON.StandardMaterial("placeholderMat", scene);
+            placeholderMaterial.diffuseColor = new BABYLON.Color3(0.8, 0.2, 0.2);
+            placeholder.material = placeholderMaterial;
+
+            // Attempt to load a Meshy model (replace with actual URL if available)
+            // BABYLON.SceneLoader.ImportMesh("", "path/to/your/meshy/model/", "model.glb", scene, function (meshes) {
+            //     if (meshes.length > 0) {
+            //         const meshyModel = meshes[0];
+            //         meshyModel.position.y = 1; // Adjust position as needed
+            //         // You might want to scale or rotate the model here
+            //         // meshyModel.scaling.set(0.1, 0.1, 0.1);
+            //         // meshyModel.rotation.y = Math.PI;
+            //         scene.removeMesh(placeholder); // Remove placeholder if model loads
+            //     }
+            // });
+
+            return scene;
+        };
+
+        playButton.addEventListener("click", () => {
+            lobbyDiv.style.display = "none";
+            canvas.style.display = "block";
+            scene = createScene();
+            engine.runRenderLoop(function () {
+                if (scene) {
+                    scene.render();
+                }
+            });
+        });
+
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
+```
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Component));
+    </script>
+</body>
+</html>

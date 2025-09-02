@@ -11,9 +11,20 @@ export default async function BlogPage() {
   const posts = await getAllPosts();
 
   return (
-    <main className="max-w-3xl mx-auto px-8 py-12">
-      <h1 className="text-4xl font-bold mb-8">Zerlo Blog</h1>
-      <BlogList posts={posts} />
-    </main>
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{
+        backgroundImage: 'url("/bg_blog/blogtree.png")',
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center top",
+        backgroundSize: "cover",
+        backgroundAttachment: "fixed", // image stays fixed
+      }}
+    >
+      <main className="max-w-3xl mx-auto px-8 py-12 relative z-10 bg-white backdrop-blur-md">
+        <h1 className="text-4xl font-bold mb-8">Zerlo Blog</h1>
+        <BlogList posts={posts} />
+      </main>
+    </div>
   );
 }

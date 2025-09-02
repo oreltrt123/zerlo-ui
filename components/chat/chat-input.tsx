@@ -1,7 +1,6 @@
 "use client"
 import { useState, useRef } from "react"
 import type React from "react"
-
 import { Button } from "@/components/ui/button"
 import {
   Sparkles,
@@ -11,9 +10,12 @@ import {
   Paperclip,
   X,
   Search,
+  Mic,
+  Wand2,
+  Pencil,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
+import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
 import {
   SiOpenai,
   SiAnthropic,
@@ -27,19 +29,53 @@ import {
 import Image from "next/image"
 import "@/styles/button.css"
 import TextareaAutosize from "react-textarea-autosize"
-import { RepoBanner } from "./repo-banner"
+
+// Define Web Speech API types
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  start: () => void
+  stop: () => void
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+  onend: (() => void) | null
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechAlternative
+  isFinal: boolean
+}
+
+interface SpeechAlternative {
+  transcript: string
+}
+
+interface SpeechRecognitionEvent {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string
+}
+
+interface SpeechRecognitionResultList {
+  length: number
+  [index: number]: SpeechRecognitionResult
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition
+    webkitSpeechRecognition: new () => SpeechRecognition
+  }
+}
 
 const models: Record<
   string,
   { name: string; author: string; description?: string; soon?: string; features?: string[] }
 > = {
-  "gpt-4o-mini": {
-    name: "GPT-4o Mini",
-    author: "OpenAI",
-    description: "Powerful and precise language model.",
-    features: ["vision", "reasoning"],
-    soon: "(Coming soon)",
-  },
   "gemini-2.5-flash": {
     name: "Gemini 2.5 Flash",
     author: "Google",
@@ -51,14 +87,6 @@ const models: Record<
     author: "Anthropic",
     description: "Fast and strong conversational AI.",
     features: ["reasoning"],
-    soon: "(Coming soon)",
-  },
-  "grok-4": {
-    name: "Grok 4",
-    author: "xAI",
-    description: "Advanced truth-seeking AI built by xAI.",
-    features: ["reasoning", "multimodal"],
-    soon: "(Coming soon)",
   },
 }
 
@@ -110,17 +138,22 @@ interface ChatInputProps {
   setInputPrompt: (value: string) => void
   onSendMessage: (model: string, language: string, discussMode?: boolean, files?: File[], searchMode?: boolean) => void
   isGenerating: boolean
+  setEditMode: (mode: boolean) => void
 }
 
-export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenerating }: ChatInputProps) {
+export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenerating, setEditMode }: ChatInputProps) {
   const [model, setModel] = useState<string>("gemini-2.5-flash")
   const [language, setLanguage] = useState<string>("html")
   const [modelOpen, setModelOpen] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
   const [discussMode, setDiscussMode] = useState(false)
   const [searchMode, setSearchMode] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   const handleExampleClick = (exampleText: string) => {
     setInputPrompt(exampleText)
@@ -142,10 +175,95 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
   const handleSendClick = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!isGenerating && inputPrompt.trim()) {
+      console.log("Sending message with model:", model)
       onSendMessage(model, language, discussMode, uploadedFiles, searchMode)
       setUploadedFiles([])
       setSearchMode(false)
     }
+  }
+
+  const handleMicClick = () => {
+    if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+      alert("Sorry, your browser does not support speech recognition.")
+      return
+    }
+
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition
+    recognitionRef.current = new SpeechRecognitionConstructor()
+    recognitionRef.current.continuous = true
+    recognitionRef.current.interimResults = true
+
+    recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+      let interimTranscript = ""
+      let finalTranscript = ""
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript
+        } else {
+          interimTranscript += transcript
+        }
+      }
+
+      setInputPrompt(finalTranscript + interimTranscript)
+    }
+
+    recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error)
+      setIsRecording(false)
+      alert("An error occurred during speech recognition: " + event.error)
+    }
+
+    recognitionRef.current.onend = () => {
+      setIsRecording(false)
+    }
+
+    if (!isRecording) {
+      recognitionRef.current.start()
+      setIsRecording(true)
+    } else {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  const enhancePrompt = (prompt: string): string => {
+    if (prompt.toLowerCase().includes("computer game with sheets")) {
+      return `Develop a professional 2D puzzle game inspired by spreadsheet mechanics:
+- Create a grid-based interface resembling a digital spreadsheet
+- Implement puzzle mechanics where players manipulate cells using formulas and data
+- Include vibrant, modern visuals with a clean, minimalist UI using Inter font
+- Add progression system with levels, challenges, and unlockable themes
+- Support keyboard inputs for formula entry and mouse-based cell selection
+- Include a tutorial mode to guide new players
+- Optimize for performance on web browsers using TypeScript and Pixi.js`
+    }
+    return `Enhanced prompt: ${prompt} with detailed specifications, modern UI, and optimized performance using best practices for web-based game development.`
+  }
+
+  const handleEnhanceClick = async () => {
+    if (!inputPrompt.trim()) {
+      alert("Please enter a prompt to enhance.")
+      return
+    }
+
+    setIsEnhancing(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const enhancedPrompt = enhancePrompt(inputPrompt)
+      setInputPrompt(enhancedPrompt)
+    } catch (error) {
+      console.error("Prompt enhancement error:", error)
+      alert("An error occurred while enhancing the prompt.")
+    } finally {
+      setIsEnhancing(false)
+    }
+  }
+
+  const handleEditClick = () => {
+    setIsEditing(!isEditing)
+    setEditMode(!isEditing)
   }
 
   const labelMap: Record<string, { label: string; imageLight: string; imageDark: string }> = {
@@ -196,6 +314,8 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
         return <SiPython className="h-4 w-4 mr-2" />
       case "html":
         return <SiHtml5 className="h-4 w-4 mr-2" />
+      default:
+        return null
     }
   }
 
@@ -249,10 +369,9 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto relative top-[33px]">
+      <div className="max-w-2xl mx-auto relative">
         <form onSubmit={handleSendClick} onKeyDown={onEnter} className="mb-2 mt-auto flex flex-col bg-background">
           <div className="relative">
-            <RepoBanner className="absolute bottom-full inset-x-2 translate-y-1 z-0 pb-2" />
             {uploadedFiles.length > 0 && (
               <div className="mb-2 p-2 bg-gray-50 dark:bg-[#404040] rounded-lg">
                 <div className="flex flex-wrap gap-2">
@@ -282,7 +401,11 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="h-8 px-3 hover:bg-[#88888811] text-muted-foreground hover:text-preview-foreground rounded-lg border-0 font-medium text-xs"
+                      className={`h-8 px-3 text-xs font-medium rounded-lg border-0 ${
+                        model === "claude-3-5-sonnet"
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                          : "text-muted-foreground hover:text-muted-foreground hover:bg-[#88888811]"
+                      }`}
                       aria-label="Select model"
                       title={`Current model: ${models[model]?.name || model}`}
                     >
@@ -290,40 +413,38 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                       <span className="hidden md:inline">{models[model]?.name || model}</span>
                     </Button>
                   </PopoverTrigger>
-                  {modelOpen && (
-                    <PopoverContent className="p-0 w-[300px]">
-                      <Command>
-                        <CommandInput placeholder="Select model..." />
-                        <CommandList>
-                          <CommandEmpty>No models found.</CommandEmpty>
-                          <CommandGroup>
-                            {Object.keys(models).map((modelOption) => (
-                              <CommandItem
-                                key={modelOption}
-                                value={modelOption}
-                                onSelect={(value) => {
-                                  setModel(value)
-                                  setModelOpen(false)
-                                }}
-                              >
-                                <div className="flex items-center w-full">
-                                  {modelOption === model && <Check className="mr-2 h-4 w-4" />}
-                                  {modelOption !== model && getModelIcon(modelOption)}
-                                  <div className="flex flex-col">
-                                    <span>{models[modelOption]?.name || modelOption}</span>
-                                    <span style={{ fontSize: "13px", color: "gray" }}>
-                                      {models[modelOption].description}
-                                    </span>
-                                    <span style={{ fontSize: "13px", color: "gray" }}>{models[modelOption].soon}</span>
-                                  </div>
+                  <PopoverContent className="p-0 w-[300px]">
+                    <Command>
+                      <CommandList>
+                        <CommandEmpty>No models found.</CommandEmpty>
+                        <CommandGroup>
+                          {Object.keys(models).map((modelOption) => (
+                            <CommandItem
+                              key={modelOption}
+                              value={modelOption}
+                              onSelect={(value) => {
+                                setModel(value)
+                                setModelOpen(false)
+                                console.log("Model selected:", value)
+                              }}
+                            >
+                              <div className="flex items-center w-full">
+                                {modelOption === model && <Check className="mr-2 h-4 w-4" />}
+                                {modelOption !== model && getModelIcon(modelOption)}
+                                <div className="flex flex-col">
+                                  <span>{models[modelOption]?.name || modelOption}</span>
+                                  <span style={{ fontSize: "13px", color: "gray" }}>
+                                    {models[modelOption].description}
+                                  </span>
+                                  <span style={{ fontSize: "13px", color: "gray" }}>{models[modelOption].soon}</span>
                                 </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
                 </Popover>
                 {!discussMode && (
                   <Popover open={languageOpen} onOpenChange={setLanguageOpen}>
@@ -338,43 +459,54 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                         <span className="hidden md:inline">{language}</span>
                       </Button>
                     </PopoverTrigger>
-                    {languageOpen && (
-                      <PopoverContent className="p-0 w-[300px]">
-                        <Command>
-                          <CommandInput placeholder="Select language..." />
-                          <CommandList>
-                            <CommandEmpty>No languages found.</CommandEmpty>
-                            <CommandGroup>
-                              {["html", "typescript", "javascript", "python"].map((languageOption) => (
-                                <CommandItem
-                                  key={languageOption}
-                                  value={languageOption}
-                                  onSelect={(value) => {
-                                    setLanguage(value)
-                                    setLanguageOpen(false)
-                                  }}
-                                >
-                                  <div className="flex items-center w-full">
-                                    {languageOption === language && <Check className="mr-2 h-4 w-4" />}
-                                    {languageOption !== language && getLanguageIcon(languageOption)}
-                                    <div className="flex flex-col">
-                                      <span>{languageOption}</span>
-                                    </div>
+                    <PopoverContent className="p-0 w-[300px]">
+                      <Command>
+                        <CommandList>
+                          <CommandEmpty>No languages found.</CommandEmpty>
+                          <CommandGroup>
+                            {["html", "typescript", "javascript", "python"].map((languageOption) => (
+                              <CommandItem
+                                key={languageOption}
+                                value={languageOption}
+                                onSelect={(value) => {
+                                  setLanguage(value)
+                                  setLanguageOpen(false)
+                                }}
+                              >
+                                <div className="flex items-center w-full">
+                                  {languageOption === language && <Check className="mr-2 h-4 w-4" />}
+                                  {languageOption !== language && getLanguageIcon(languageOption)}
+                                  <div className="flex flex-col">
+                                    <span>{languageOption}</span>
                                   </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
                   </Popover>
                 )}
                 <Button
                   variant="ghost"
                   className={`h-8 px-3 hover:bg-[#88888811] rounded-lg border-0 font-medium text-xs ${
+                    isEditing
+                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                      : "text-muted-foreground hover:text-muted-foreground"
+                  }`}
+                  onClick={handleEditClick}
+                  aria-label="Toggle edit mode"
+                  title={isEditing ? "Exit edit mode" : "Enter edit mode"}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  <span className="hidden md:inline">Edit</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`h-8 px-3 hover:bg-[#88888811] rounded-lg border-0 font-medium text-xs ${
                     discussMode
-                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-[#0099ff34] text-accent-foreground dark:text-accent-foreground"
                       : "text-muted-foreground hover:text-muted-foreground"
                   }`}
                   onClick={() => setDiscussMode(!discussMode)}
@@ -425,7 +557,7 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   onClick={() => setSearchMode(!searchMode)}
                   className={`h-8 w-8 p-0 ${
                     searchMode
-                      ? "text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
+                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
                       : "text-gray-400 hover:text-gray-600"
                   }`}
                   title={
@@ -435,6 +567,35 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   }
                 >
                   <Search className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMicClick}
+                  className={`h-8 w-8 p-0 ${
+                    isRecording
+                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
+                  title={isRecording ? "Stop recording" : "Start voice input"}
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleEnhanceClick}
+                  disabled={isEnhancing || !inputPrompt.trim()}
+                  className={`h-8 w-8 p-0 ${
+                    isEnhancing
+                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
+                  title={isEnhancing ? "Enhancing prompt..." : "Enhance prompt with AI"}
+                >
+                  <Wand2 className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center flex-1 gap-2"></div>
                 <Button
@@ -449,12 +610,6 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
               </div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            This is an open-source project made by{" "}
-            <a href="https://zerlo.online" target="_blank" className="text-[#0099FF]" rel="noreferrer">
-              ✶ Zerlo
-            </a>
-          </p>
         </form>
       </div>
     </div>

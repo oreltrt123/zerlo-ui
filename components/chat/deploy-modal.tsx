@@ -114,27 +114,45 @@ export function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModa
   return (
     <div
       ref={modalRef}
-      className="fixed bg-white rounded-lg p-4 w-64 z-50"
-      style={{ top: `${top}px`, left: `${left}px`, boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px" }}
+      className="fixed bg-white dark:bg-[#1a1a1a] rounded-lg p-4 w-64 z-50 text-gray-700 dark:text-gray-200"
+      style={{
+        top: `${top}px`,
+        left: `${left}px`,
+        boxShadow:
+          "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+      }}
     >
       <div className="space-y-2">
-        <Label>Site Name</Label>
+        <Label className="dark:text-gray-200">Site Name</Label>
         <Input
           value={siteName}
           onChange={(e) => setSiteName(e.target.value.toLowerCase())}
           placeholder="my-site"
         />
-        <p className="text-xs text-gray-500">{siteName || "NameSite"}.zerlo.online</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {siteName || "NameSite"}.zerlo.online
+        </p>
 
-        <Label>Select Component</Label>
-        <RadioGroup value={selectedMessageId} onValueChange={setSelectedMessageId} className="space-y-1">
+        <Label className="dark:text-gray-200">Select Component</Label>
+        <RadioGroup
+          value={selectedMessageId}
+          onValueChange={setSelectedMessageId}
+          className="space-y-1"
+        >
           {deployableMessages.length === 0 ? (
-            <p className="text-xs text-gray-500">No deployable components.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              No deployable components.
+            </p>
           ) : (
             deployableMessages.map((message) => (
               <div key={message.id} className="flex items-center space-x-1">
                 <RadioGroupItem value={message.id} id={message.id} />
-                <Label htmlFor={message.id} className="text-xs line-clamp-1">{message.content}</Label>
+                <Label
+                  htmlFor={message.id}
+                  className="text-xs line-clamp-1 dark:text-gray-300"
+                >
+                  {message.content}
+                </Label>
               </div>
             ))
           )}

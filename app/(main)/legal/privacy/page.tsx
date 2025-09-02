@@ -202,6 +202,8 @@ export default function PrivacyPolicyPage() {
   const t = translations[lang] || translations.en;
 
   return (
+    <div>
+            <div className="bg-white absolute w-[100%] h-[5%]"></div>
     <main
       className="min-h-screen py-12 px-6"
       style={{
@@ -212,7 +214,7 @@ export default function PrivacyPolicyPage() {
           "linear-gradient(90deg, rgba(235, 247, 255, 1) 0%, rgba(214, 239, 255, 1) 35%, rgba(255, 255, 255, 1) 100%)",
       }}
     >
-      <div className="max-w-3xl mx-auto bg-white rounded-lg p-8">
+      <div className="max-w-3xl mx-auto rounded-lg p-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
         </div>
@@ -267,5 +269,6 @@ export default function PrivacyPolicyPage() {
         </section>
       </div>
     </main>
+    </div>
   );
 }

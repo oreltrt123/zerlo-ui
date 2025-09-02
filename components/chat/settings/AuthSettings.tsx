@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import "@/styles/button.css"
 
 interface AuthSettingsProps {
   chatId: string
@@ -141,25 +142,25 @@ export default function AuthSettings({ chatId, authCode, onAuthCodeGenerated }: 
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-[#1a1d24] p-4 rounded-lg shadow-sm">
+      <div className="bg-white dark:bg-[#303030] p-4 rounded-lg">
         <h3 className="text-lg font-semibold mb-2">Site Settings</h3>
         <div className="space-y-4">
           <div>
             <Label>Site Name</Label>
+            <div className="mt-[10px]"></div>
             <Input
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}
               placeholder="Enter site name"
-              className="border-[#e6e6e6] dark:border-[#30363d]"
             />
           </div>
           <div>
             <Label>Site Icon URL</Label>
+            <div className="mt-[10px]"></div>
             <Input
               value={siteIcon}
               onChange={(e) => setSiteIcon(e.target.value)}
               placeholder="Enter icon URL"
-              className="border-[#e6e6e6] dark:border-[#30363d]"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -172,7 +173,7 @@ export default function AuthSettings({ chatId, authCode, onAuthCodeGenerated }: 
           </div>
         </div>
       </div>
-      <div className="bg-white dark:bg-[#1a1d24] p-4 rounded-lg shadow-sm">
+      <div className="bg-white dark:bg-[#303030] p-4 rounded-lg">
         <h3 className="text-lg font-semibold mb-2">Authentication Methods</h3>
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
@@ -210,8 +211,8 @@ export default function AuthSettings({ chatId, authCode, onAuthCodeGenerated }: 
         </div>
       </div>
       <div className="flex gap-2">
-        <Button onClick={handleUpdateSettings}>Save Settings</Button>
-        <Button variant="destructive" onClick={handleDeleteChat}>
+        <Button onClick={handleUpdateSettings} className="shadow-none r2552esf25_252trewt3erblueFontDocs bg-[#363636b2] hover:bg-[#36363681]">Save Settings</Button>
+        <Button variant="destructive" onClick={handleDeleteChat} className="shadow-none r2552esf25_252trewt3erblueFontDocs bg-[#fc2e2eb2] hover:bg-[#fc6363b2]">
           Delete Chat
         </Button>
       </div>

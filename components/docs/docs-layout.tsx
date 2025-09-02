@@ -32,7 +32,7 @@ export function DocsLayout({ children, navbar }: DocsLayoutProps) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#88888813]">
       {navbar}
       <div className="flex">
         <DocsSidebar />

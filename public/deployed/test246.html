@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test246</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        }
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+        
+        // Define the component
+        function Component() {
+            ```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Game Starter</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background-color: #222; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #lobby { text-align: center; }
+        #gameCanvas { display: none; width: 100%; height: 100%; }
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="lobby">
+        <h1>Welcome to the Game!</h1>
+        <button id="playButton">Play Game</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+        const lobby = document.getElementById("lobby");
+        const playButton = document.getElementById("playButton");
+
+        let scene; // Declare scene globally
+
+        const createScene = function () {
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(0.1, 0.1, 0.1); // Dark background
+
+            // Camera
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.lowerRadiusLimit = 5; // Prevent camera from going too close
+            camera.upperRadiusLimit = 50; // Prevent camera from going too far
+            camera.wheelPrecision = 50; // Adjust zoom speed
+
+            // Lighting
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.8;
+
+            // Ground
+            const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 50, height: 50 }, scene);
+            const groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
+            groundMaterial.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4); // Dark grey ground
+            groundMaterial.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+            ground.material = groundMaterial;
+
+            // Load the character (Remy.fbx)
+            // IMPORTANT: Replace 'Remy.fbx' with the actual path to your model.
+            // If Remy.fbx is in a 'models' folder next to your HTML, use './models/Remy.fbx'
+            // If it's hosted elsewhere, use the full URL.
+            const modelPath = "Remy.fbx"; // <<< CHANGE THIS PATH IF NEEDED
+
+            BABYLON.SceneLoader.ImportMesh("", modelPath, "", scene, function (meshes) {
+                if (meshes.length > 0) {
+                    const character = meshes[0]; // Assuming the first mesh is the character
+
+                    // Center the character and adjust scale/position
+                    character.scaling.scale(0.1); // Adjust scale as needed
+                    character.position.y = 0.5; // Adjust vertical position to be on the ground
+                    character.rotation.y = Math.PI; // Rotate to face forward
+
+                    // Apply PBR Material if available (optional, requires PBR textures in the model)
+                    // Example: If your FBX includes PBR textures, Babylon.js might load them automatically.
+                    // If not, you might need to create and assign materials manually.
+
+                    // Shadows
+                    const shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+                    shadowGenerator.addShadowCaster(character);
+                    ground.receiveShadows = true;
+
+                    console.log("Character loaded successfully!");
+                } else {
+                    console.error("No meshes found in the model file.");
+                }
+            }, function (progress) {
+                // Optional: Handle loading progress
+                console.log("Loading progress: " + (progress.loaded / progress.total * 100) + "%");
+            }, function (scene, message, exception) {
+                // Optional: Handle errors
+                console.error("Error loading model:", message, exception);
+                alert(`Failed to load character model. Please check the path: ${modelPath}`);
+            });
+
+            return scene;
+        };
+
+        playButton.addEventListener("click", () => {
+            lobby.style.display = "none";
+            canvas.style.display = "block";
+            scene = createScene(); // Create the game scene
+            engine.runRenderLoop(function () {
+                if (scene) {
+                    scene.render();
+                }
+            });
+        });
+
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
+```
+        }
+        
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Component));
+    </script>
+</body>
+</html>

@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { Link, LogOut } from "lucide-react"
+import { Link, LogOut, Settings } from "lucide-react"
 import { GitHubLogoIcon, DiscordLogoIcon, TwitterLogoIcon } from "@radix-ui/react-icons"
 import "@/styles/button.css"
 
@@ -36,9 +36,10 @@ interface ChatNavbarProps {
   showLogin: () => void
   signOut: () => void
   onSocialClick: (target: 'github' | 'x' | 'discord') => void
+  onSettingsClick: () => void
 }
 
-export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSocialClick }: ChatNavbarProps) {
+export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSocialClick, onSettingsClick }: ChatNavbarProps) {
   const [showDeployModal, setShowDeployModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const deployButtonRef = useRef<HTMLButtonElement>(null)
@@ -130,6 +131,22 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Share chat</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onSettingsClick}
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-[#8888881A]"
+                  >
+                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Chat settings</TooltipContent>
               </Tooltip>
             </TooltipProvider>
             

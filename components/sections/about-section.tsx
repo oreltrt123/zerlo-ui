@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
-
+import { Component } from "@/components/ui/animated-background"
 export default function AboutSection() {
   const [ref, inView] = useInView({
     triggerOnce: false,
@@ -22,7 +22,7 @@ export default function AboutSection() {
   return (
     <section ref={ref} className="py-20 md:py-32 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/5 via-transparent to-rose-900/5" />
-
+    <Component />
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <motion.div
           variants={containerVariants}

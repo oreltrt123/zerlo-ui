@@ -57,7 +57,10 @@ export function ShareModal({ isOpen, onClose, buttonRef }: ShareModalProps) {
 
       if (error) throw error
 
-      const shareLink = typeof window !== "undefined" ? `${window.location.origin}/shared/${shareId}` : `/shared/${shareId}`
+      const shareLink =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/shared/${shareId}`
+          : `/shared/${shareId}`
       setGeneratedLink(shareLink)
       toast.success("Share link generated successfully!")
     } catch (error) {
@@ -88,51 +91,83 @@ export function ShareModal({ isOpen, onClose, buttonRef }: ShareModalProps) {
 
   return (
     <div
-      className="fixed bg-white rounded-lg p-4 w-64 z-50"
-      style={{ top: `${top}px`, left: `${left}px`, boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px" }}
+      className="fixed bg-white dark:bg-[#1a1a1a] rounded-lg p-4 w-64 z-50 text-gray-700 dark:text-gray-200"
+      style={{
+        top: `${top}px`,
+        left: `${left}px`,
+        boxShadow:
+          "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+      }}
     >
       <div className="space-y-2">
         {!generatedLink ? (
           <>
-            <Label>Visibility</Label>
+            <Label className="dark:text-gray-200">Visibility</Label>
             <RadioGroup
               value={shareSettings.visibility}
-              onValueChange={(value: "public" | "private") => setShareSettings((prev) => ({ ...prev, visibility: value }))}
+              onValueChange={(value: "public" | "private") =>
+                setShareSettings((prev) => ({ ...prev, visibility: value }))
+              }
               className="space-y-1"
             >
               <div className="flex items-center space-x-1">
                 <RadioGroupItem value="public" id="public" />
-                <Label htmlFor="public" className="text-xs">Public</Label>
+                <Label htmlFor="public" className="text-xs dark:text-gray-300">
+                  Public
+                </Label>
               </div>
               <div className="flex items-center space-x-1">
                 <RadioGroupItem value="private" id="private" />
-                <Label htmlFor="private" className="text-xs">Private</Label>
+                <Label htmlFor="private" className="text-xs dark:text-gray-300">
+                  Private
+                </Label>
               </div>
             </RadioGroup>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label htmlFor="allow-messages" className="text-xs">Messages</Label>
+                <Label
+                  htmlFor="allow-messages"
+                  className="text-xs dark:text-gray-300"
+                >
+                  Messages
+                </Label>
                 <Switch
                   id="allow-messages"
                   checked={shareSettings.allowMessages}
-                  onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowMessages: checked }))}
+                  onCheckedChange={(checked) =>
+                    setShareSettings((prev) => ({ ...prev, allowMessages: checked }))
+                  }
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="allow-deploy" className="text-xs">Deploy</Label>
+                <Label
+                  htmlFor="allow-deploy"
+                  className="text-xs dark:text-gray-300"
+                >
+                  Deploy
+                </Label>
                 <Switch
                   id="allow-deploy"
                   checked={shareSettings.allowDeploy}
-                  onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowDeploy: checked }))}
+                  onCheckedChange={(checked) =>
+                    setShareSettings((prev) => ({ ...prev, allowDeploy: checked }))
+                  }
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="allow-copy" className="text-xs">Copy</Label>
+                <Label
+                  htmlFor="allow-copy"
+                  className="text-xs dark:text-gray-300"
+                >
+                  Copy
+                </Label>
                 <Switch
                   id="allow-copy"
                   checked={shareSettings.allowCopy}
-                  onCheckedChange={(checked) => setShareSettings((prev) => ({ ...prev, allowCopy: checked }))}
+                  onCheckedChange={(checked) =>
+                    setShareSettings((prev) => ({ ...prev, allowCopy: checked }))
+                  }
                 />
               </div>
             </div>
@@ -150,18 +185,32 @@ export function ShareModal({ isOpen, onClose, buttonRef }: ShareModalProps) {
           </>
         ) : (
           <>
-            <Label>Share Link</Label>
+            <Label className="dark:text-gray-200">Share Link</Label>
             <div className="flex items-center gap-1">
-              <Input value={generatedLink} readOnly className="flex-1 text-xs bg-gray-50" />
-              <Button onClick={handleCopyLink} size="sm" variant="outline" className="p-1 bg-transparent">
+              <Input
+                value={generatedLink}
+                readOnly
+                className="flex-1 text-xs bg-gray-50 dark:bg-[#2a2a2a] dark:text-gray-200"
+              />
+              <Button
+                onClick={handleCopyLink}
+                size="sm"
+                variant="outline"
+                className="p-1 bg-transparent dark:border-gray-600"
+              >
                 <Copy className="h-3 w-3" />
               </Button>
             </div>
-            <p className="text-xs text-gray-500">
-              • Vis: {shareSettings.visibility === "public" ? "Public" : "Private"} • Msg: {shareSettings.allowMessages ? "Yes" : "No"} • Dep: {shareSettings.allowDeploy ? "Yes" : "No"} • Copy: {shareSettings.allowCopy ? "Yes" : "No"}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              • Vis: {shareSettings.visibility === "public" ? "Public" : "Private"} • Msg:{" "}
+              {shareSettings.allowMessages ? "Yes" : "No"} • Dep:{" "}
+              {shareSettings.allowDeploy ? "Yes" : "No"} • Copy:{" "}
+              {shareSettings.allowCopy ? "Yes" : "No"}
             </p>
             <div className="flex justify-end">
-              <Button onClick={handleClose} size="sm">Done</Button>
+              <Button onClick={handleClose} size="sm">
+                Done
+              </Button>
             </div>
           </>
         )}
