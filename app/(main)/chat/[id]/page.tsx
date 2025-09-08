@@ -1,7 +1,8 @@
+// chat/[id]/page.tsx
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/supabase/client"
 import { Toaster, toast } from "sonner"
 import type { User } from "@supabase/supabase-js"
@@ -9,7 +10,9 @@ import { ChatNavbar } from "@/components/chat/chat-navbar"
 import { ChatMessages } from "@/components/chat/chat-messages"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ComponentPreview } from "@/components/chat/component-preview"
+import { PasswordPromptModal } from "@/components/chat/password-prompt-modal"
 import { handleRestoreComponent } from "@/components/chat/chat-messages"
+import type { SketchfabModel } from "@/lib/sketchfab-api"
 import * as React from "react"
 import { useCompletion } from "ai/react"
 import { Button } from "@/components/ui/button"
@@ -17,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import "@/styles/button.css"
+import "@/styles/loader3D.css"
 
 interface Message {
   id: string
@@ -50,22 +54,22 @@ export default function ChatIdPage({ params }: PageProps) {
   const resolvedParams = React.use(params)
   const chatId = resolvedParams.id
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [user, setUser] = useState<User | null>(null)
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputPrompt, setInputPrompt] = useState<string>("")
   const [selectedLanguage, setSelectedLanguage] = useState<string>("html")
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
-  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings">("preview")
+  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings" | "assets">("preview")
   const [editMode, setEditMode] = useState<boolean>(false)
   const [loading, setLoading] = useState(true)
   const [isComponentVisible, setIsComponentVisible] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [isChatHidden, setIsChatHidden] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [isPasswordProtected, setIsPasswordProtected] = useState(false)
+  const [, setPasswordHash] = useState<string | null>(null)
   const deployButtonRef = useRef<HTMLButtonElement>(null)
-  const hasSentInitialMessage = useRef(false)
-
   const chatPanelRef = useRef<HTMLDivElement>(null)
   const chatMessagesRef = useRef<HTMLDivElement>(null)
   const [chatMessagesPanelHeight, setChatMessagesPanelHeight] = useState(0)
@@ -150,24 +154,19 @@ export default function ChatIdPage({ params }: PageProps) {
       if (messageContextRef.current) {
         const { aiMessageId } = messageContextRef.current
         const componentTitle = generateComponentTitle(messageContextRef.current.originalUserPrompt)
-        try {
-          await saveMessageWithComponent(aiMessageId, completion, componentTitle)
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aiMessageId
-                ? {
-                    ...msg,
-                    component_code: completion,
-                    component_title: componentTitle,
-                    isGeneratingComponent: false,
-                  }
-                : msg,
-            ),
-          )
-        } catch (error) {
-          console.error("Error saving component:", error)
-          toast.error("Failed to save component data.")
-        }
+        await saveMessageWithComponent(aiMessageId, completion, componentTitle)
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMessageId
+              ? {
+                  ...msg,
+                  component_code: completion,
+                  component_title: componentTitle,
+                  isGeneratingComponent: false,
+                }
+              : msg,
+          ),
+        )
       }
     },
     onError: (err) => {
@@ -197,7 +196,7 @@ export default function ChatIdPage({ params }: PageProps) {
     isLoading: isLoadingChat,
     complete: completeChat,
   } = useCompletion({
-    api: "/api/chat-response",
+    api: "/api/chat",
     body: {
       language: selectedLanguage,
       chatHistory: messages.slice(-10),
@@ -218,11 +217,19 @@ export default function ChatIdPage({ params }: PageProps) {
           )
           messageContextRef.current = { aiMessageId: realAiMessageId, originalUserPrompt, chatHistory }
           if (!isDiscussMode.current) {
-            completeComponent(originalUserPrompt)
+            completeComponent(originalUserPrompt, {
+              body: {
+                language: selectedLanguage,
+                chatHistory: messages.slice(-10),
+                selectedStyle: currentSelectedStyle.current,
+                selectedGameType: currentSelectedGameType.current,
+                slashCommand: currentSlashCommand.current,
+              },
+            })
           }
         } catch (error) {
           console.error("Error saving AI message:", error)
-          toast.error("Error saving AI response.")
+          toast.error("Error saving AI response")
         }
       }
     },
@@ -256,7 +263,7 @@ export default function ChatIdPage({ params }: PageProps) {
           )
         } catch (error) {
           console.error("Error saving AI discuss message:", error)
-          toast.error("Error saving AI response.")
+          toast.error("Error saving AI response")
         }
       }
     },
@@ -290,7 +297,7 @@ export default function ChatIdPage({ params }: PageProps) {
           )
         } catch (error) {
           console.error("Error saving AI search message:", error)
-          toast.error("Error saving AI response.")
+          toast.error("Error saving AI response")
         }
       }
     },
@@ -304,6 +311,9 @@ export default function ChatIdPage({ params }: PageProps) {
   })
 
   const isDiscussMode = useRef(false)
+  const currentSelectedStyle = useRef<string>("gaming")
+  const currentSelectedGameType = useRef<string>("3d")
+  const currentSlashCommand = useRef<string | null>(null)
 
   const loadMessages = useCallback(async () => {
     try {
@@ -315,7 +325,7 @@ export default function ChatIdPage({ params }: PageProps) {
         .order("created_at", { ascending: true })
       if (error) {
         console.error("Error loading messages:", error)
-        throw new Error(`Failed to load messages: ${error.message}`)
+        throw error
       }
       console.log("Loaded messages from database:", data)
       const loadedMessages: Message[] = data.map((msg) => ({
@@ -338,7 +348,7 @@ export default function ChatIdPage({ params }: PageProps) {
       }
     } catch (error) {
       console.error("Error loading messages:", error)
-      toast.error("Failed to load chat messages. Please try again.")
+      toast.error("Error loading messages")
     }
   }, [chatId, supabase])
 
@@ -346,44 +356,45 @@ export default function ChatIdPage({ params }: PageProps) {
     try {
       const {
         data: { user },
-        error: userError,
       } = await supabase.auth.getUser()
 
-      if (userError || !user) {
-        console.error("Error fetching user:", userError)
-        toast.error("Authentication failed. Please log in again.")
+      if (!user) {
         router.push("/login")
         return
       }
 
       setUser(user)
 
-      const { data: chatData, error: chatError } = await supabase
-        .from("chats")
+      const { data: chatData, error: chatError } = await supabase.from("chats").select("*").eq("id", chatId).single()
+      if (chatError) {
+        console.error("Error fetching chat:", chatError)
+        throw chatError
+      }
+      setChat(chatData)
+
+      // Check security settings
+      const { data: securityData, error: securityError } = await supabase
+        .from("chat_security_beta")
         .select("*")
-        .eq("id", chatId)
+        .eq("chat_id", chatId)
         .single()
 
-      if (chatError || !chatData) {
-        console.error("Error fetching chat:", chatError || "Chat not found")
-        toast.error("Chat not found or you don't have access.")
-        router.push("/chat")
-        return
+      if (securityError && securityError.code !== "PGRST116") {
+        console.error("Error loading security data:", securityError)
+        toast.error("Failed to load security settings")
+        throw securityError
       }
 
-      if (chatData.user_id !== user.id) {
-        console.error("Access denied: User does not own this chat")
-        toast.error("You don't have permission to access this chat.")
-        router.push("/chat")
-        return
+      if (securityData && securityData.password_protected) {
+        setIsPasswordProtected(true)
+        setPasswordHash(securityData.password_hash)
+        setIsPasswordModalOpen(true)
+      } else {
+        await loadMessages()
       }
-
-      setChat(chatData)
-      await loadMessages()
     } catch (error) {
       console.error("Error initializing chat:", error)
-      toast.error("Failed to load chat data. Please try again later.")
-      router.push("/chat")
+      toast.error("Error loading chat")
     } finally {
       setLoading(false)
     }
@@ -405,7 +416,7 @@ export default function ChatIdPage({ params }: PageProps) {
         .single()
       if (error) {
         console.error("Error inserting message:", error)
-        throw new Error(`Failed to save message: ${error.message}`)
+        throw error
       }
       console.log("Message saved with ID:", data.id)
       await supabase.from("chats").update({ updated_at: new Date().toISOString() }).eq("id", chatId)
@@ -435,7 +446,7 @@ export default function ChatIdPage({ params }: PageProps) {
           toast.error("Database needs to be updated. Please run the migration script.")
           return
         }
-        throw new Error(`Failed to update message with component: ${error.message}`)
+        throw error
       }
       console.log("Message updated successfully:", data)
     } catch (error) {
@@ -450,6 +461,9 @@ export default function ChatIdPage({ params }: PageProps) {
     discussMode?: boolean,
     files?: File[],
     searchMode?: boolean,
+    selectedStyle?: string,
+    selectedGameType?: string,
+    slashCommand?: string,
   ) => {
     if (!inputPrompt.trim()) {
       toast.warning("Please enter a message.")
@@ -458,6 +472,10 @@ export default function ChatIdPage({ params }: PageProps) {
 
     setSelectedLanguage(language)
     isDiscussMode.current = discussMode || false
+
+    currentSelectedStyle.current = selectedStyle || "gaming"
+    currentSelectedGameType.current = selectedGameType || "3d"
+    currentSlashCommand.current = slashCommand || null
 
     const tempUserMessageId = `temp-user-${Date.now()}`
     const tempAiMessageId = `temp-ai-${Date.now() + 1}`
@@ -470,6 +488,12 @@ export default function ChatIdPage({ params }: PageProps) {
     }
     if (searchMode) {
       userMessageContent += `\n\n[Web search enabled]`
+    }
+    if (selectedStyle && selectedGameType && !discussMode) {
+      userMessageContent += `\n\n[Game Type: ${selectedGameType.toUpperCase()}, Button Style: ${selectedStyle}]`
+    }
+    if (slashCommand) {
+      userMessageContent += `\n\n[Slash Command: ${slashCommand}]`
     }
 
     const userMessage: Message = { id: tempUserMessageId, sender: "user", content: userMessageContent }
@@ -521,11 +545,19 @@ export default function ChatIdPage({ params }: PageProps) {
         }
         await completeDiscuss(promptWithFiles)
       } else {
-        await completeChat(currentInput)
+        await completeChat(currentInput, {
+          body: {
+            language: selectedLanguage,
+            chatHistory: messages.slice(-10),
+            selectedStyle: selectedStyle || "gaming",
+            selectedGameType: selectedGameType || "3d",
+            slashCommand: slashCommand || null,
+          },
+        })
       }
     } catch (error) {
       console.error("Error in handleSendMessage:", error)
-      toast.error("Error sending message. Please try again.")
+      toast.error("Error sending message")
       setMessages((prev) => prev.filter((msg) => msg.id !== tempUserMessageId && msg.id !== tempAiMessageId))
     }
   }
@@ -564,18 +596,46 @@ export default function ChatIdPage({ params }: PageProps) {
     return processedPrompt
   }
 
-  const isGenerating = isLoadingChat || isLoadingComponent || isLoadingDiscuss || isLoadingSearch
+  const handlePasswordSuccess = async () => {
+    setIsPasswordModalOpen(false)
+    await loadMessages()
+  }
 
-  // Handle initial message from chat page
+  const handlePasswordClose = () => {
+    setIsPasswordModalOpen(false)
+    router.push("/dashboard") // Redirect to dashboard or home if password entry is canceled
+  }
+
+  const handleAssetSelect = async (asset: SketchfabModel) => {
+    const assetPrompt =
+      asset.uid === "fix-error"
+        ? `Fix the error in the current component: ${asset.description}`
+        : `Add this 3D asset to my game: "${asset.name}" by ${asset.user.displayName}. UID: ${asset.uid} ${asset.description || "A professional 3D model from Sketchfab."} Please integrate it seamlessly into the current game with proper positioning, scaling, and interactions as a character that walks on the map.`
+
+    setInputPrompt(assetPrompt)
+
+    // Auto-send the message
+    await handleSendMessage("gemini", "html", false, undefined, false, "gaming", "3d",)
+
+    toast.success(`Integrating ${asset.name} into your game!`)
+  }
+
   useEffect(() => {
-    const initialMessage = searchParams.get("initialMessage")
-    if (initialMessage && !hasSentInitialMessage.current && !loading && chat && user) {
-      hasSentInitialMessage.current = true
-      const decodedMessage = decodeURIComponent(initialMessage)
-      setInputPrompt(decodedMessage)
-      handleSendMessage("default", selectedLanguage, false, [], false)
+    const handleSandboxError = (event: CustomEvent) => {
+      console.error("[v0] Sandbox error detected:", event.detail)
+      // Trigger error state in ComponentPreview
+      window.dispatchEvent(
+        new CustomEvent("componentError", {
+          detail: event.detail,
+        }),
+      )
     }
-  }, [searchParams, loading, chat, user, handleSendMessage, selectedLanguage])
+
+    window.addEventListener("sandboxError", handleSandboxError as EventListener)
+    return () => window.removeEventListener("sandboxError", handleSandboxError as EventListener)
+  }, [])
+
+  const isGenerating = isLoadingChat || isLoadingComponent || isLoadingDiscuss || isLoadingSearch
 
   useEffect(() => {
     if (isLoadingChat && chatCompletionText) {
@@ -626,8 +686,35 @@ export default function ChatIdPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        <span className="ml-2 text-slate-600">Loading chat...</span>
+        <div className="loader">
+          <div className="box box0">
+            <div></div>
+          </div>
+          <div className="box box1">
+            <div></div>
+          </div>
+          <div className="box box2">
+            <div></div>
+          </div>
+          <div className="box box3">
+            <div></div>
+          </div>
+          <div className="box box4">
+            <div></div>
+          </div>
+          <div className="box box5">
+            <div></div>
+          </div>
+          <div className="box box6">
+            <div></div>
+          </div>
+          <div className="box box7">
+            <div></div>
+          </div>
+          <div className="ground">
+            <div></div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -641,12 +728,23 @@ export default function ChatIdPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="relative flex h-screen bg-background">
       <Toaster richColors position="top-center" />
+      {isPasswordModalOpen && isPasswordProtected && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <PasswordPromptModal
+            isOpen={isPasswordModalOpen}
+            onClose={handlePasswordClose}
+            onSuccess={handlePasswordSuccess}
+            chatName={chat.name}
+            chatId={chatId}
+          />
+        </div>
+      )}
       <div
         className={`flex transition-all duration-300 ease-in-out ${
           isComponentVisible && !isAnimating && !isChatHidden ? "w-1/2" : "w-full justify-center"
-        } ${isChatHidden ? "hidden" : ""}`}
+        } ${isChatHidden || isPasswordModalOpen ? "hidden" : ""}`}
       >
         <div
           ref={chatPanelRef}
@@ -660,13 +758,8 @@ export default function ChatIdPage({ params }: PageProps) {
             user={user}
             showLogin={() => router.push("/login")}
             signOut={async () => {
-              try {
-                await supabase.auth.signOut()
-                router.push("/login")
-              } catch (error) {
-                console.error("Error signing out:", error)
-                toast.error("Failed to sign out. Please try again.")
-              }
+              await supabase.auth.signOut()
+              router.push("/login")
             }}
             onSocialClick={(target: "github" | "x" | "discord") => {
               const urls = {
@@ -695,6 +788,7 @@ export default function ChatIdPage({ params }: PageProps) {
                 onSendMessage={handleSendMessage}
                 isGenerating={isGenerating}
                 setEditMode={setEditMode}
+                messages={messages}
               />
             </div>
           </div>
@@ -715,6 +809,7 @@ export default function ChatIdPage({ params }: PageProps) {
             editMode={editMode}
             deployButtonRef={deployButtonRef}
             setIsChatHidden={setIsChatHidden}
+            onAssetSelect={handleAssetSelect}
           />
           <DeployModal
             isOpen={viewMode === "settings"}
@@ -756,8 +851,10 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
       const selectedMessage = messages.find((msg) => msg.id === selectedMessageId)
       if (!selectedMessage?.component_code) throw new Error("Selected message has no component code")
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) throw new Error("User not authenticated")
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("User not authenticated")
 
       const { data: existingSite } = await supabase
         .from("deployed_sites")
@@ -785,7 +882,7 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
         .select()
         .single()
 
-      if (error) throw new Error(`Failed to deploy site: ${error.message}`)
+      if (error) throw error
 
       const response = await fetch("/api/deploy", {
         method: "POST",
@@ -797,10 +894,7 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Failed to deploy site: ${errorData.message || "Unknown error"}`)
-      }
+      if (!response.ok) throw new Error("Failed to deploy site")
 
       await response.json()
       toast.success(`Site deployed successfully! Visit: zerlo.online.${siteName}`)
@@ -825,18 +919,18 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
     <div
       ref={modalRef}
       className="fixed bg-white rounded-lg p-4 w-64 z-50"
-      style={{ top: `${top}px`, left: `${left}px`, boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px" }}
+      style={{
+        top: `${top}px`,
+        left: `${left}px`,
+        boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+      }}
     >
       <div className="space-y-2">
         <Label>Site Name</Label>
-        <Input
-          value={siteName}
-          onChange={(e) => setSiteName(e.target.value.toLowerCase())}
-          placeholder="my-site"
-        />
+        <Input value={siteName} onChange={(e) => setSiteName(e.target.value.toLowerCase())} placeholder="my-site" />
         <p className="text-xs text-gray-500">{siteName || "NameSite"}.zerlo.online</p>
 
-        <Label>Select Component to deploy</Label>
+        <Label>Select Component</Label>
         <RadioGroup value={selectedMessageId} onValueChange={setSelectedMessageId} className="space-y-1">
           {deployableMessages.length === 0 ? (
             <p className="text-xs text-gray-500">No deployable components.</p>
@@ -844,25 +938,23 @@ function DeployModal({ isOpen, onClose, messages, buttonRef }: DeployModalProps)
             deployableMessages.map((message) => (
               <div key={message.id} className="flex items-center space-x-1">
                 <RadioGroupItem value={message.id} id={message.id} />
-                <Label htmlFor={message.id} className="text-xs line-clamp-1">{message.content}</Label>
+                <Label htmlFor={message.id} className="text-xs line-clamp-1">
+                  {message.content}
+                </Label>
               </div>
             ))
           )}
         </RadioGroup>
 
         <div className="flex justify-end space-x-1">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            size="sm"
-          >
+          <Button variant="ghost" onClick={onClose} size="sm">
             Close
           </Button>
           <Button
             onClick={handleDeploy}
             disabled={!selectedMessageId || !siteName.trim() || isDeploying}
             size="sm"
-            className="bg-[#0099FF] hover:bg-[#0099ffde] text-white r2552esf25_252trewt3erblueFontDocs"
+            className="bg-[#009009] hover:bg-[#0099ffde] text-white r2552esf25_252trewt3erblueFontDocs"
           >
             {isDeploying ? "Deploying..." : "Deploy"}
           </Button>

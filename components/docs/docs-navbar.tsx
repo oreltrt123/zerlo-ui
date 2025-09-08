@@ -1,8 +1,8 @@
 import { createClient } from '@/supabase/server';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import AccountMenu from '@/components/account-menu';
-import LanguageDropdown from '@/components/language-dropdown';
+// import AccountMenu from '@/components/account-menu';
+// import LanguageDropdown from '@/components/language-dropdown';
 
 // Translations for Navbar UI strings by language code
 const translations: Record<string, { 
@@ -82,7 +82,7 @@ export default async function Navbar() {
         </div> 
 
         {/* Right Side Actions */} 
-        <div className="flex items-center gap-4"> 
+        {/* <div className="flex items-center gap-4"> 
           <LanguageDropdown user={user} currentLanguage={language} /> 
           {user ? ( 
             <AccountMenu user={user} /> 
@@ -94,7 +94,7 @@ export default async function Navbar() {
               <Link href="/login">{currentTexts.login}</Link>
             </Button>
           )}
-        </div>
+        </div> */}
       </div>
     </nav>
   );

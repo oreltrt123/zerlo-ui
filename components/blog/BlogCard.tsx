@@ -18,8 +18,8 @@ export default function BlogCard({ title, slug, excerpt, date, coverImage }: Pro
           <img src={coverImage} alt="" className="w-full h-48 object-cover rounded-lg" />
         </Link>
       ) : null}
-
-      <h2 className="text-2xl font-semibold mb-2">
+      
+      <h2 className="text-black mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto">
         <Link href={`/blog/${slug}`} className="hover:underline">
           {title}
         </Link>

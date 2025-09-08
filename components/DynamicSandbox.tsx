@@ -28,7 +28,11 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
 
   const srcdoc = useMemo(() => {
     const trimmedHtml = html.trim()
-    const isFullHtml = /^<!DOCTYPE/i.test(trimmedHtml) || /^<html/i.test(trimmedHtml) || /<head>/i.test(trimmedHtml) || /<body>/i.test(trimmedHtml)
+    const isFullHtml =
+      /^<!DOCTYPE/i.test(trimmedHtml) ||
+      /^<html/i.test(trimmedHtml) ||
+      /<head>/i.test(trimmedHtml) ||
+      /<body>/i.test(trimmedHtml)
 
     const wrapperMeta = `
     <meta charset="utf-8" />
@@ -57,7 +61,7 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
         display: block; 
         width: 100%;
         height: 100%;
-        cursor: ${editMode ? 'default' : 'crosshair'};
+        cursor: ${editMode ? "default" : "crosshair"};
       }
       .game-ui {
         position: absolute;
@@ -65,7 +69,7 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
         left: 0;
         width: 100%;
         height: 100%;
-        pointer-events: ${editMode ? 'auto' : 'none'};
+        pointer-events: ${editMode ? "auto" : "none"};
         z-index: 1000;
       }
       .game-ui > * {
@@ -134,11 +138,11 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
         border: 1px solid rgba(255, 255, 255, 0.1);
       }
       .editable-element {
-        cursor: ${editMode ? 'pointer' : 'default'};
+        cursor: ${editMode ? "pointer" : "default"};
         transition: all 0.2s ease;
       }
       .editable-element:hover {
-        ${editMode ? 'outline: 2px solid #2196F3; outline-offset: 2px;' : ''}
+        ${editMode ? "outline: 2px solid #2196F3; outline-offset: 2px;" : ""}
       }
     </style>
     `
@@ -228,16 +232,22 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
       })
       setInterval(reportHeight, 1000)
 
-      ${editMode ? '' : `
+      ${
+        editMode
+          ? ""
+          : `
       document.addEventListener('click', (e) => {
         const canvas = document.querySelector('canvas')
         if (canvas && !document.pointerLockElement && !e.target.closest('.game-ui')) {
           canvas.requestPointerLock?.()
         }
       })
-      `}
+      `
+      }
 
-      ${editMode ? `
+      ${
+        editMode
+          ? `
       // Add editable element functionality
       function makeElementsEditable() {
         const editableElements = document.querySelectorAll('.game-ui .hud, .game-ui p, .game-ui h1, .game-ui h2, .game-ui h3, .game-ui span, .game-ui .game-button, .game-ui div')
@@ -286,7 +296,9 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
           }
         }
       })
-      ` : ''}
+      `
+          : ""
+      }
     </script>
     `
 
@@ -298,8 +310,8 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
 
     if (isFullHtml) {
       let enhanced = trimmedHtml
-      enhanced = enhanced.replace(/<\/head>/i, additionalStyles + '</head>')
-      enhanced = enhanced.replace(/<\/body>/i, additionalScript + '</body>')
+      enhanced = enhanced.replace(/<\/head>/i, additionalStyles + "</head>")
+      enhanced = enhanced.replace(/<\/body>/i, additionalScript + "</body>")
       return enhanced
     } else {
       return `<!DOCTYPE html>
@@ -351,16 +363,24 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
             newFontSize: newProps.fontSize,
           },
         },
-        "*"
+        "*",
       )
       // Update the generated component code
       const parser = new DOMParser()
       const doc = parser.parseFromString(html, "text/html")
       const element = doc.querySelector(`[data-editable-id="${selectedElementId}"]`) as HTMLElement | null
       if (element) {
-        if (newProps.text && (element.tagName === 'P' || element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || element.tagName === 'SPAN' || element.classList.contains('hud'))) {
+        if (
+          newProps.text &&
+          (element.tagName === "P" ||
+            element.tagName === "H1" ||
+            element.tagName === "H2" ||
+            element.tagName === "H3" ||
+            element.tagName === "SPAN" ||
+            element.classList.contains("hud"))
+        ) {
           element.textContent = newProps.text
-        } else if (newProps.text && element.tagName === 'BUTTON') {
+        } else if (newProps.text && element.tagName === "BUTTON") {
           element.innerText = newProps.text
         }
         if (newProps.color) element.style.color = newProps.color
@@ -386,7 +406,7 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
           height,
           background: "#000",
           boxShadow: "0 8px 32px rgba(33, 150, 243, 0.2)",
-          cursor: editMode ? 'default' : 'auto',
+          cursor: editMode ? "default" : "auto",
         }}
         srcDoc={srcdoc}
       />
@@ -433,7 +453,7 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
                   id="element-x"
                   type="number"
                   value={selectedElementProps.x}
-                  onChange={(e) => handleElementUpdate({ x: parseFloat(e.target.value) })}
+                  onChange={(e) => handleElementUpdate({ x: Number.parseFloat(e.target.value) })}
                   className="mt-1"
                 />
               </div>
@@ -443,7 +463,7 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
                   id="element-y"
                   type="number"
                   value={selectedElementProps.y}
-                  onChange={(e) => handleElementUpdate({ y: parseFloat(e.target.value) })}
+                  onChange={(e) => handleElementUpdate({ y: Number.parseFloat(e.target.value) })}
                   className="mt-1"
                 />
               </div>
@@ -453,7 +473,7 @@ const DynamicSandbox: React.FC<DynamicSandboxProps> = ({ html, height = 800, edi
                   id="element-size"
                   type="number"
                   value={selectedElementProps.fontSize}
-                  onChange={(e) => handleElementUpdate({ fontSize: parseFloat(e.target.value) })}
+                  onChange={(e) => handleElementUpdate({ fontSize: Number.parseFloat(e.target.value) })}
                   className="mt-1"
                 />
               </div>

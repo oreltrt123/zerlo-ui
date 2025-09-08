@@ -17,6 +17,7 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "Feature Request", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
   fr: {
@@ -30,6 +31,7 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "Demande de fonctionnalité", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "En savoir plus sur Zerlo", href: "/about/about-zerlo" },
     ],
   },
   he: {
@@ -43,6 +45,8 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "בקשת תכונה", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "יותר על זרלו", href: "/about/about-zerlo" },
+
     ],
   },
   zh: {
@@ -56,6 +60,8 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "功能请求", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "More about Zerlo", href: "/about/about-zerlo" },
+
     ],
   },
   ar: {
@@ -69,6 +75,7 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "طلب ميزة", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
   ru: {
@@ -82,6 +89,7 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "Запрос функции", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
   hi: {
@@ -95,6 +103,7 @@ const translations: Record<string, {
       { label: "About", href: "/about" },
       { label: "सुविधा का अनुरोध", href: "https://zerlo.featurebase.app/" },
       { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
 };
@@ -111,7 +120,7 @@ export default async function Footer() {
         {/* Top message */}
         <div className="flex flex-col gap-1 text-left">
           <p
-            className="text-[40px] font-semibold text-[#2B2B2B] leading-snug"
+            className="text-[40px] mb-2 text-2xl text-[#2B2B2B] font-sans font-light leading-relaxed"
             dangerouslySetInnerHTML={{ __html: currentTexts.topMessage }}
           />
         </div>

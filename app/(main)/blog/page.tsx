@@ -14,7 +14,7 @@ export default async function BlogPage() {
     <div
       className="min-h-screen bg-cover bg-center bg-fixed"
       style={{
-        backgroundImage: 'url("/bg_blog/blogtree.png")',
+        // backgroundImage: 'url("/bg_blog/blogtree.png")',
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center top",
         backgroundSize: "cover",
@@ -22,7 +22,7 @@ export default async function BlogPage() {
       }}
     >
       <main className="max-w-3xl mx-auto px-8 py-12 relative z-10 bg-white backdrop-blur-md">
-        <h1 className="text-4xl font-bold mb-8">Zerlo Blog</h1>
+        <h1 style={{fontSize: "50px"}} className="text-black text-lg font-sans font-light leading-relaxed max-w-3xl mx-auto text-center">Zerlo Blog</h1>
         <BlogList posts={posts} />
       </main>
     </div>

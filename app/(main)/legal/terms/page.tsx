@@ -472,13 +472,12 @@ export default function TermsyPage() {
   return (
     <main
       className="min-h-screen py-12 px-6"
-      style={{
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        background:
-          "linear-gradient(90deg, rgba(235, 247, 255, 1) 0%, rgba(214, 239, 255, 1) 35%, rgba(255, 255, 255, 1) 100%)",
-      }}
+    style={{
+      backgroundSize: "100% auto", // full width, auto height
+      backgroundPosition: "center -130px", // move image down
+      backgroundRepeat: "no-repeat",
+      backgroundImage: 'url("/assets/images/bg.jpg")'
+    }}
     >
       {/* Fixed Font Control Button in Top-Right */}
       <div style={{ position: "fixed", top: "20px", right: "20px", zIndex: 999 }}>
@@ -526,12 +525,12 @@ export default function TermsyPage() {
 
       <div className="terms-container">
         <div className="title">
-          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+          <h1 className="text-3xl font-sans font-light italic text-gray-900">{t.title}</h1>
           <p className="update-date">{t.updateDate}</p>
         </div>
 
         <div className="content">
-          <h2>{t.section1Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section1Title}</h2>
           <p>{t.section1Text}</p>
           <ul>
             {t.section1List.map((item, index) => (
@@ -541,7 +540,7 @@ export default function TermsyPage() {
         </div>
 
         <div className="content">
-          <h2>{t.section2Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section2Title}</h2>
           <p>{t.section2Text}</p>
           <ul>
             {t.section2List.map((item, index) => (
@@ -551,7 +550,7 @@ export default function TermsyPage() {
         </div>
 
         <div className="content">
-          <h2>{t.section3Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section3Title}</h2>
           <p>{t.section3Text}</p>
         </div>
 
@@ -561,7 +560,7 @@ export default function TermsyPage() {
         </div>
 
         <div className="content">
-          <h2>{t.section5Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section5Title}</h2>
           <p>{t.section5Text}</p>
           <ul>
             {t.section5List.map((item, index) => (
@@ -571,22 +570,22 @@ export default function TermsyPage() {
         </div>
 
         <div className="content">
-          <h2>{t.section6Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section6Title}</h2>
           <p>{t.section6Text}</p>
         </div>
 
         <div className="content">
-          <h2>{t.section7Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section7Title}</h2>
           <p>{t.section7Text}</p>
         </div>
 
         <div className="content">
-          <h2>{t.section8Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section8Title}</h2>
           <p>{t.section8Text}</p>
         </div>
 
         <div className="content">
-          <h2>{t.section9Title}</h2>
+          <h2 className="font-sans font-light italic">{t.section9Title}</h2>
           <p>
             {t.section9Text}{" "}
             <a href={`mailto:${t.section9Email}`}>{t.section9Email}</a>.

@@ -56,24 +56,35 @@ export default function AnalyticsSettings({ chatId }: AnalyticsSettingsProps) {
   const [deployingMessageId, setDeployingMessageId] = useState<string | null>(null);
   const [siteName, setSiteName] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadComponents = useCallback(async () => {
+    if (!chatId) {
+      toast.error("Invalid chat ID");
+      return;
+    }
+    setIsLoading(true);
     try {
       const response = await fetch(`/api/components/${chatId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch components");
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch components: ${response.status} ${response.statusText} - ${errorText}`);
       }
       const data = await response.json();
       setComponents(data);
     } catch (error) {
       console.error("Error loading components:", error);
-      toast.error("Error loading data");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      toast.error(`Error loading data: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
     }
   }, [chatId]);
 
   useEffect(() => {
+    console.log("chatId:", chatId);
     loadComponents();
-  }, [loadComponents]);
+  }, [loadComponents, chatId]);
 
   const handleStartDeploy = (messageId: string) => {
     setDeployingMessageId(messageId);
@@ -127,7 +138,8 @@ export default function AnalyticsSettings({ chatId }: AnalyticsSettingsProps) {
       await loadComponents();
     } catch (error) {
       console.error("Deployment error:", error);
-      toast.error("Failed to deploy site. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      toast.error(`Failed to deploy site: ${errorMessage}`);
     } finally {
       setIsDeploying(false);
     }
@@ -148,7 +160,9 @@ export default function AnalyticsSettings({ chatId }: AnalyticsSettingsProps) {
           <CardDescription>Publish components to the internet and view their analytics</CardDescription>
         </CardHeader>
         <CardContent>
-          {components.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8">Loading components...</div>
+          ) : components.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No components created in this chat.</p>
               <p className="text-sm">Create components in the chat to get started.</p>

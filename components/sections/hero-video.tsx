@@ -171,7 +171,7 @@ export default function HeroVideo() {
 
         {/* Text Section */}
         <div className="w-full lg:w-1/2 p-6 lg:p-10">
-          <h2 className="text-4xl font-medium text-gray-900 mb-4">
+          <h2 className="text-4xl text-gray-900 font-sans font-light leading-relaxed max-w-3xl mx-auto">
             {currentTexts.heading}
           </h2>
           <p className="text-gray-600 mb-6">

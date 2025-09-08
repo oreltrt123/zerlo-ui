@@ -170,9 +170,7 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                     {/* Message Actions */}
                     <div
                       className={`${
-                        msg.sender === "user"
-                          ? "absolute top-2 left-[-40px]"
-                          : "flex justify-end mt-2 mr-2"
+                        msg.sender === "user" ? "absolute top-2 left-[-40px]" : "flex justify-end mt-2 mr-2"
                       } opacity-0 group-hover:opacity-100 transition-opacity`}
                     >
                       {msg.sender === "user" ? (
@@ -270,7 +268,12 @@ export const ChatMessages = ({ messages, onRestoreComponent }: ChatMessagesProps
                                   onClick={() => internalHandleRestoreComponent(msg.component_code!)}
                                   className="h-6 w-6 p-0 text-gray-400 hover:text-orange-600"
                                 >
-                                  <Image src="/assets/images/restore.png" alt="Restore Component" width={16} height={16} />
+                                  <Image
+                                    src="/assets/images/restore.png"
+                                    alt="Restore Component"
+                                    width={16}
+                                    height={16}
+                                  />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Restore Component</TooltipContent>

@@ -664,19 +664,19 @@ export default async function AboutPage() {
 
   {/* Foreground Content */}
   <section className="relative z-10 w-full px-4">
-    <div className="max-w-4xl mx-auto text-center bg-white/90 p-8 rounded-2xl">
-      <h1 className="text-6xl md:text-7xl font-bold text-black/80 mb-10 top-[-10px] relative">
+    <div className="max-w-4xl mx-auto text-center p-8 rounded-2xl backdrop-blur-md bg-[#cec2c21a]">
+      <h1 style={{fontSize: "50px"}} className="text-white mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto text-center relative top-[-30px]">
         {t.hero.title}
       </h1>
 
-      <p className='h1--scalingSize text-black/80 mt-[-30px] relative top-[-14px] mb-[5px]' data-text='An awesome title'>
+      <p className='h1--scalingSize text-white/80 mt-[-30px] relative top-[-14px] mb-[5px]' data-text='An awesome title'>
         {t.hero.description}
       </p>
 
       <div className="flex flex-wrap justify-center gap-3">
         <Badge
           variant="secondary"
-          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-black/50 border-none"
+          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-white/50 border-none"
         >
           <Zap className="w-3 h-3 mr-1" />
           {t.hero.badges.fast}
@@ -684,7 +684,7 @@ export default async function AboutPage() {
 
         <Badge
           variant="secondary"
-          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-black/50 border-none"
+          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-white/50 border-none"
         >
           <Code className="w-3 h-3 mr-1" />
           {t.hero.badges.aiPowered}
@@ -692,7 +692,7 @@ export default async function AboutPage() {
 
         <Badge
           variant="secondary"
-          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-black/50 border-none"
+          className="bg-[#0099ff3d] hover:bg-[#0099ff33] text-white/50 border-none"
         >
           <Gamepad2 className="w-3 h-3 mr-1" />
           {t.hero.badges.gamesAndSites}
@@ -707,7 +707,7 @@ export default async function AboutPage() {
   <div className="container mx-auto px-4">
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+        <h2 style={{fontSize: "50px"}} className="text-black mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto text-center">
           {t.mission.title}
         </h2>
         <p className="text-lg leading-relaxed h1--scalingSize text-black/80 ">
@@ -767,7 +767,7 @@ export default async function AboutPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.team.title}</h2>
+            <h2 style={{fontSize: "50px"}} className="text-black mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto text-center">{t.team.title}</h2>
             <p className="text-lg max-w-2xl mx-auto h1--scalingSize text-black/80 ">{t.team.subtitle}</p>
           </div>
 
@@ -817,7 +817,7 @@ export default async function AboutPage() {
       <section className="py-20 bg-gray-100">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.technology.title}</h2>
+            <h2 style={{fontSize: "50px"}} className="text-black mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto text-center">{t.technology.title}</h2>
             <p className="text-lg h1--scalingSize text-black/80 max-w-3xl mx-auto">{t.technology.subtitle}</p>
           </div>
 
@@ -862,7 +862,7 @@ export default async function AboutPage() {
       {/* CTA Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">{t.cta.title}</h2>
+          <h2 style={{fontSize: "50px"}} className="text-black mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto text-center">{t.cta.title}</h2>
         </div>
       </section>
     <Footer />

@@ -18,10 +18,10 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        blue: "border border-input bg-[rgb(0,153,255)] text-white cursor-default",
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer",
+        blue: "border border-input bg-[rgb(0,153,255)] text-white cursor-pointer",
         link: "text-primary underline-offset-4 hover:underline",
-        blueFont: "r2552esf25_252trewt3erblueFont border border-input bg-[rgb(0,153,255)] text-white cursor-default",
+        blueFont: "r2552esf25_252trewt3erblueFont border border-input bg-[rgb(0,153,255)] text-white cursor-pointer",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

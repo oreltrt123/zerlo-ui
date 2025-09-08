@@ -203,57 +203,55 @@ export default function PrivacyPolicyPage() {
 
   return (
     <div>
-            <div className="bg-white absolute w-[100%] h-[5%]"></div>
     <main
       className="min-h-screen py-12 px-6"
-      style={{
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        background:
-          "linear-gradient(90deg, rgba(235, 247, 255, 1) 0%, rgba(214, 239, 255, 1) 35%, rgba(255, 255, 255, 1) 100%)",
-      }}
+    style={{
+      backgroundSize: "100% auto", // full width, auto height
+      backgroundPosition: "center -130px", // move image down
+      backgroundRepeat: "no-repeat",
+      backgroundImage: 'url("/assets/images/bg.jpg")'
+    }}
     >
       <div className="max-w-3xl mx-auto rounded-lg p-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+        <h1 className="text-4xl font-sans font-light italic">{t.title}</h1>
         </div>
 
         <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 text-gray-900">
+          <h2 className="text-xl font-sans font-light italic text-gray-900">
             {t.section1Title}
           </h2>
           <p>{t.section1Text}</p>
         </section>
 
         <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 text-gray-900">
+          <h2 className="text-xl font-sans font-light italic text-gray-900">
             {t.section2Title}
           </h2>
           <p>{t.section2Text1}</p>
           <p className="mt-4">
-            <strong className="text-gray-900">{t.section2Text2Title}</strong>
+            <strong className="font-sans font-light italic text-gray-900">{t.section2Text2Title}</strong>
             <br />
             {t.section2Text2}
           </p>
         </section>
 
         <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 text-gray-900">
+          <h2 className="text-xl font-sans font-light italic text-gray-900">
             {t.section3Title}
           </h2>
           <p>{t.section3Text}</p>
         </section>
 
         <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2 text-gray-900">
+          <h2 className="text-xl font-sans font-light italic text-gray-900">
             {t.section4Title}
           </h2>
           <p>{t.section4Text}</p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-2 text-gray-900">
+          <h2 className="text-xl font-sans font-light italic text-gray-900">
             {t.section5Title}
           </h2>
           <p>

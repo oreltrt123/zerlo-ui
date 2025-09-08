@@ -53,15 +53,16 @@ const translations: Record<string, {
 
 interface AccountMenuProps {
   user: User | null;
+  openDropdown: string | null;
+  setOpenDropdown: (dropdown: string | null) => void;
 }
 
-export default function AccountMenu({ user }: AccountMenuProps) {
+export default function AccountMenu({ user, openDropdown, setOpenDropdown }: AccountMenuProps) {
   const supabase = createClient();
   const router = useRouter();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [language, setLanguage] = useState("en");
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     async function getProfile() {
@@ -116,20 +117,31 @@ export default function AccountMenu({ user }: AccountMenuProps) {
 
   const currentTexts = translations[language] || translations.en;
 
+  const toggleDropdown = () => {
+    if (typeof setOpenDropdown === "function") {
+      setOpenDropdown(openDropdown === "account" ? null : "account");
+    } else {
+      console.error("setOpenDropdown is not a function");
+    }
+  };
+
   return (
     <div className="relative">
-        <Avatar className="h-8 w-8 text-black/70 border-none" onClick={() => setIsOpen(!isOpen)}>
-          {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt={username || "User Avatar"} />
-          ) : (
-            <AvatarImage
-              src={user?.user_metadata?.avatar_url || `https://avatar.vercel.sh/${user?.email || 'default'}`}
-              style={{ borderRadius: "100%" }}
-              alt={user?.email || "User"}
-            />
-          )}
-        </Avatar>
-      {isOpen && (
+      <Avatar
+        className="h-8 w-8 text-black/70 border-none cursor-pointer"
+        onClick={toggleDropdown}
+      >
+        {avatarUrl ? (
+          <AvatarImage src={avatarUrl} alt={username || "User Avatar"} />
+        ) : (
+          <AvatarImage
+            src={user?.user_metadata?.avatar_url || `https://avatar.vercel.sh/${user?.email || 'default'}`}
+            style={{ borderRadius: "100%" }}
+            alt={user?.email || "User"}
+          />
+        )}
+      </Avatar>
+      {openDropdown === "account" && (
         <div
           className="absolute right-0 w-48 bg-white rounded-lg z-50"
           style={{
@@ -140,27 +152,27 @@ export default function AccountMenu({ user }: AccountMenuProps) {
           <div className="py-2">
             <Link
               href="/chat"
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2"
-              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+              onClick={() => setOpenDropdown(null)}
             >
               <UserIcon className="h-4 w-4 text-gray-700" />
               {currentTexts.chat}
             </Link>
-            <Link href={'/settings'}>
-            <div
-              onClick={() => setIsOpen(false)}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4 text-gray-700" />
-              {currentTexts.settings}
-            </div>
+            <Link href="/settings">
+              <div
+                onClick={() => setOpenDropdown(null)}
+                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4 text-gray-700" />
+                {currentTexts.settings}
+              </div>
             </Link>
             <div
               onClick={() => {
-                setIsOpen(false);
+                setOpenDropdown(null);
                 handleSignOut();
               }}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2"
+              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
             >
               <LogOut className="h-4 w-4 text-gray-700" />
               {currentTexts.logout}

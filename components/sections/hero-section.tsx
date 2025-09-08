@@ -150,14 +150,18 @@ style={{
 
         {/* Content */}
         <div className="relative z-10 container mx-auto px-4 md:px-6 py-20 text-center top-[-90px]">
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="max-w-2xl mx-auto">
             <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-              className="text-4xl sm:text-5xl md:text-6xl tracking-tight text-black"
+              className="text-4xl text-gray-900 font-sans font-light leading-relaxed max-w-3xl mx-auto"
               dangerouslySetInnerHTML={{ __html: currentTexts.title }}
             />
+
+          <p className="text-gray-600 mb-2 relative top-[-10px]">
+            Build games. <span className="bg-[#8888881A]">Build</span> graphics. <span className="bg-[#8888881A]">Build</span> sound. Build everything — in a single <span className="bg-[#8888881A] text-[#0099FF]">prompt.</span>
+          </p>
 <motion.div
   initial={{ y: 20, opacity: 0 }}
   animate={{ y: 0, opacity: 1 }}
@@ -178,7 +182,7 @@ style={{
       <Link href={"/chat"}>
         <button
           className="absolute right-0 bottom-0 p-2 bg-[#0099ffb2] hover:bg-[#0099ffbe] text-white 
-            rounded-full transition-colors"
+            rounded-full transition-colors cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -197,7 +201,7 @@ style={{
       </Link>
               <button
           className="absolute right-10 bottom-0 p-2 bg-[#88888817] hover:bg-[#8888880a] text-white 
-            rounded-full transition-colors"
+            rounded-full transition-colors cursor-pointer"
           onClick={() => setIsDemoOpen(true)}>
                 <Image
                   className="w-[14px] h-[14px]"
@@ -224,7 +228,7 @@ style={{
             onClick={(e) => e.stopPropagation()}
           >
             <video
-              src="/assets/video/heroSectionVideodemo.mp4"
+              src="/assets/video/ADzerlo.mp4"
               autoPlay
               muted
               loop
@@ -232,7 +236,7 @@ style={{
             />
             <button
               onClick={() => setIsDemoOpen(false)}
-              className="absolute top-4 right-4 text-white text-2xl font-bold"
+              className="absolute top-4 right-4 text-white text-2xl font-bold cursor-pointer"
             >
               ×
             </button>

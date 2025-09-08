@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
+  },
   images: {
     remotePatterns: [
       {
@@ -26,7 +29,12 @@ const nextConfig = {
         port: '',
         pathname: '/avatar/**',
       },
-      // Add more patterns for other image hosts as needed
+      {
+        protocol: 'https',
+        hostname: 'media.sketchfab.com',
+        port: '',
+        pathname: '/models/**',
+      },
     ],
   },
 };

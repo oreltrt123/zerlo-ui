@@ -146,13 +146,13 @@ export default function HeroImg() {
         {/* Image & Input Section */}
         {/* Text Section */}
         <div className="w-full lg:w-1/2 p-6 lg:p-10">
-          <h2 className="text-4xl font-medium text-gray-900 mb-4">
+          <h2 className="text-4xl text-gray-900 font-sans font-light leading-relaxed max-w-3xl mx-auto">
             {currentTexts.heading}
           </h2>
           <p className="text-gray-600 mb-6">
             {currentTexts.description}
           </p>
-          <Link href="/chat" className="text-[rgb(0,153,255)] hover:underline font-medium">
+          <Link href="/security" className="text-[rgb(0,153,255)] hover:underline font-medium">
             {currentTexts.linkText}
           </Link>
         </div>

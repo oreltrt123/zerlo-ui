@@ -1,11 +1,16 @@
+// components/chat/settings/AuthSettings.tsx
 "use client"
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/supabase/client"
-import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import "@/styles/button.css"
 
 interface AuthSettingsProps {
@@ -14,208 +19,249 @@ interface AuthSettingsProps {
   onAuthCodeGenerated: (code: string) => void
 }
 
+interface ChatData {
+  id: string
+  name: string
+  description: string | null
+  user_id: string
+  is_public?: boolean
+}
+
 export default function AuthSettings({ chatId, authCode, onAuthCodeGenerated }: AuthSettingsProps) {
-  const [siteName, setSiteName] = useState("")
-  const [siteIcon, setSiteIcon] = useState("")
-  const [isPublic, setIsPublic] = useState(true)
-  const [authMethods, setAuthMethods] = useState({
-    email: true,
-    google: false,
-    microsoft: false,
-    facebook: false,
-  })
+  const [chatData, setChatData] = useState<ChatData | null>(null)
+  const [chatName, setChatName] = useState("")
+  const [chatDescription, setChatDescription] = useState("")
+  const [isPublic, setIsPublic] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const supabase = createClient()
 
-  const fetchSettings = useCallback(async () => {
+  const loadChatData = useCallback(async () => {
+    setIsLoading(true)
     try {
-      const { data } = await supabase
-        .from("chats")
-        .select("name, is_public, icon")
-        .eq("id", chatId)
-        .single()
-      if (data) {
-        setSiteName(data.name)
-        setIsPublic(data.is_public ?? true)
-        setSiteIcon(data.icon || "")
+      const { data, error } = await supabase.from("chats").select("*").eq("id", chatId).single()
+
+      if (error) {
+        console.error("Error loading chat data:", error)
+        toast.error("Failed to load chat settings")
+        return
       }
-      const { data: authData } = await supabase
-        .from("auth_settings")
-        .select("email, google, microsoft, facebook")
-        .eq("chat_id", chatId)
-        .single()
-      if (authData) {
-        setAuthMethods({
-          email: authData.email ?? true,
-          google: authData.google ?? false,
-          microsoft: authData.microsoft ?? false,
-          facebook: authData.facebook ?? false,
-        })
+
+      if (data) {
+        setChatData(data)
+        setChatName(data.name)
+        setChatDescription(data.description || "A conversation about your next great app idea")
+        setIsPublic(data.is_public || false)
       }
     } catch (error) {
-      console.error("Error fetching settings:", error)
-      toast.error("Error loading settings")
+      console.error("Error:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
     }
   }, [chatId, supabase])
 
-  const generateAuthCode = async () => {
-    if (!authMethods.email) return
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: `Create a login and signup page with email and password authentication for a web application. Include client-side validation and Supabase auth integration.`,
-          language: "html",
-        }),
-      })
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error("No response body")
-      let generatedCode = ""
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        generatedCode += new TextDecoder().decode(value)
-      }
-      await supabase.from("auth_settings").upsert({
-        chat_id: chatId,
-        login_code: generatedCode,
-        updated_at: new Date().toISOString(),
-      })
-      onAuthCodeGenerated(generatedCode)
-      toast.success("Authentication code generated!")
-    } catch (error) {
-      console.error("Error generating auth code:", error)
-      toast.error("Error generating authentication code")
-    }
-  }
+  const saveChatSettings = async () => {
+    if (!chatData) return
 
-  const handleUpdateSettings = async () => {
+    setIsSaving(true)
     try {
-      await supabase
+      console.log("[v0] Attempting to save chat settings for chatId:", chatId)
+      console.log("[v0] Data to save:", {
+        name: chatName.trim(),
+        description: chatDescription.trim(),
+        is_public: isPublic,
+      })
+
+      const { data, error } = await supabase
         .from("chats")
         .update({
-          name: siteName,
+          name: chatName.trim(),
+          description: chatDescription.trim() || null,
           is_public: isPublic,
-          icon: siteIcon || null,
-        })
-        .eq("id", chatId)
-      await supabase
-        .from("auth_settings")
-        .upsert({
-          chat_id: chatId,
-          email: authMethods.email,
-          google: authMethods.google,
-          microsoft: authMethods.microsoft,
-          facebook: authMethods.facebook,
           updated_at: new Date().toISOString(),
         })
-      if (authMethods.email && !authCode) {
-        await generateAuthCode()
+        .eq("id", chatId)
+        .select()
+
+      console.log("[v0] Supabase response:", { data, error })
+
+      if (error) {
+        console.error("[v0] Supabase error details:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        })
+        toast.error(`Failed to save chat settings: ${error.message}`)
+        return
       }
-      toast.success("Settings updated successfully!")
+
+      console.log("[v0] Chat settings saved successfully")
+      toast.success("Chat settings saved successfully")
+
+      setChatData((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: chatName,
+              description: chatDescription,
+              is_public: isPublic,
+            }
+          : null
+      )
     } catch (error) {
-      console.error("Error updating settings:", error)
-      toast.error("Error updating settings")
+      console.error("[v0] Unexpected error:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsSaving(false)
     }
   }
 
-  const handleDeleteChat = async () => {
+  const handleOAuthSetup = async (provider: "google" | "microsoft") => {
     try {
-      await supabase.from("chats").delete().eq("id", chatId)
-      toast.success("Chat deleted successfully!")
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider === "microsoft" ? "azure" : provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) {
+        toast.error(`Failed to setup ${provider} login`)
+      } else {
+        toast.success(`${provider} login setup initiated`)
+      }
     } catch (error) {
-      console.error("Error deleting chat:", error)
-      toast.error("Error deleting chat")
+      console.error("OAuth setup error:", error)
+      toast.error("Failed to setup OAuth")
     }
   }
 
-  const handleAuthMethodChange = async (method: keyof typeof authMethods, value: boolean) => {
-    setAuthMethods((prev) => ({ ...prev, [method]: value }))
-    if (method === "email" && value && !authCode) {
-      await generateAuthCode()
-    }
+  const generateNewAuthCode = () => {
+    const newCode = "AUTH-" + Math.random().toString(36).substr(2, 9).toUpperCase()
+    onAuthCodeGenerated(newCode)
+    toast.success("New authentication code generated")
   }
 
   useEffect(() => {
-    fetchSettings()
-  }, [fetchSettings])
+    loadChatData()
+  }, [loadChatData])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-10 bg-gray-200 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-20 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-[#303030] p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Site Settings</h3>
-        <div className="space-y-4">
-          <div>
-            <Label>Site Name</Label>
-            <div className="mt-[10px]"></div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Chat Information</CardTitle>
+          <CardDescription>Customize your chat name and description</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="chat-name">Chat Name</Label>
             <Input
-              value={siteName}
-              onChange={(e) => setSiteName(e.target.value)}
-              placeholder="Enter site name"
+              id="chat-name"
+              value={chatName}
+              onChange={(e) => setChatName(e.target.value)}
+              placeholder="Enter chat name"
             />
           </div>
-          <div>
-            <Label>Site Icon URL</Label>
-            <div className="mt-[10px]"></div>
-            <Input
-              value={siteIcon}
-              onChange={(e) => setSiteIcon(e.target.value)}
-              placeholder="Enter icon URL"
+
+          <div className="space-y-2">
+            <Label htmlFor="chat-description">Description</Label>
+            <Textarea
+              id="chat-description"
+              value={chatDescription}
+              onChange={(e) => setChatDescription(e.target.value)}
+              placeholder="A conversation about your next great app idea"
+              rows={3}
             />
           </div>
+
           <div className="flex items-center space-x-2">
-            <Switch
-              checked={isPublic}
-              onCheckedChange={setIsPublic}
-              id="public-switch"
-            />
-            <Label htmlFor="public-switch">Public Chat</Label>
+            <Switch id="public-chat" checked={isPublic} onCheckedChange={setIsPublic} />
+            <Label htmlFor="public-chat">Make this chat public</Label>
           </div>
-        </div>
-      </div>
-      <div className="bg-white dark:bg-[#303030] p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Authentication Methods</h3>
-        <div className="space-y-3">
+
+          <Button onClick={saveChatSettings} disabled={isSaving || !chatName.trim()} className="w-full">
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Login Methods</CardTitle>
+          <CardDescription>Connect additional login methods for easier access</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-3">
+            <Button variant="outline" onClick={() => handleOAuthSetup("google")} className="w-full justify-start">
+              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Connect Google Account
+            </Button>
+
+            <Button variant="outline" onClick={() => handleOAuthSetup("microsoft")} className="w-full justify-start">
+              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"
+                />
+              </svg>
+              Connect Microsoft Account
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Authentication Code</CardTitle>
+          <CardDescription>Current authentication code for this chat</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Switch
-              checked={authMethods.email}
-              onCheckedChange={(checked) => handleAuthMethodChange("email", checked)}
-              id="email-auth"
-            />
-            <Label htmlFor="email-auth">Email/Password</Label>
+            <code className="flex-1 p-2 bg-gray-100 rounded text-sm font-mono">{authCode || "No code generated"}</code>
+            <Badge variant="secondary">Active</Badge>
           </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={authMethods.google}
-              onCheckedChange={(checked) => handleAuthMethodChange("google", checked)}
-              id="google-auth"
-            />
-            <Label htmlFor="google-auth">Google</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={authMethods.microsoft}
-              onCheckedChange={(checked) => handleAuthMethodChange("microsoft", checked)}
-              id="microsoft-auth"
-            />
-            <Label htmlFor="microsoft-auth">Microsoft</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={authMethods.facebook}
-              onCheckedChange={(checked) => handleAuthMethodChange("facebook", checked)}
-              id="facebook-auth"
-            />
-            <Label htmlFor="facebook-auth">Facebook</Label>
-          </div>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Button onClick={handleUpdateSettings} className="shadow-none r2552esf25_252trewt3erblueFontDocs bg-[#363636b2] hover:bg-[#36363681]">Save Settings</Button>
-        <Button variant="destructive" onClick={handleDeleteChat} className="shadow-none r2552esf25_252trewt3erblueFontDocs bg-[#fc2e2eb2] hover:bg-[#fc6363b2]">
-          Delete Chat
-        </Button>
-      </div>
+          <Button variant="outline" onClick={generateNewAuthCode} className="w-full bg-transparent">
+            Generate New Code
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }

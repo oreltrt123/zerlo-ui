@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
-import Image from "next/image"; // Import next/image
+import Image from "next/image";
 
 // Language codes, labels, and flag URLs for selection
 const languages = [
@@ -17,8 +17,14 @@ const languages = [
   { code: "he", label: "Hebrew", flag: "/assets/images/language/israel.png" },
 ];
 
-const LanguageDropdown = ({ user, currentLanguage }: { user: User | null; currentLanguage: string }) => {
-  const [isOpen, setIsOpen] = useState(false);
+interface LanguageDropdownProps {
+  user: User | null;
+  currentLanguage: string;
+  openDropdown: string | null;
+  setOpenDropdown: (dropdown: string | null) => void;
+}
+
+const LanguageDropdown = ({ user, currentLanguage, openDropdown, setOpenDropdown }: LanguageDropdownProps) => {
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage);
   const supabase = createClient();
 
@@ -32,7 +38,7 @@ const LanguageDropdown = ({ user, currentLanguage }: { user: User | null; curren
     async (languageCode: string) => {
       if (!user) return;
       setSelectedLanguage(languageCode);
-      setIsOpen(false);
+      setOpenDropdown(null);
 
       const updatedMetadata = {
         ...user.user_metadata,
@@ -50,13 +56,21 @@ const LanguageDropdown = ({ user, currentLanguage }: { user: User | null; curren
         window.location.reload();
       }
     },
-    [user, supabase]
+    [user, supabase, setOpenDropdown]
   );
+
+  const toggleDropdown = () => {
+    if (typeof setOpenDropdown === "function") {
+      setOpenDropdown(openDropdown === "language" ? null : "language");
+    } else {
+      console.error("setOpenDropdown is not a function");
+    }
+  };
 
   return (
     <div className="relative">
       <Button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleDropdown}
         variant={'blueFont'}
       >
         <span>{languages.find(lang => lang.code === selectedLanguage)?.label || "Language"}</span>
@@ -74,7 +88,7 @@ const LanguageDropdown = ({ user, currentLanguage }: { user: User | null; curren
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </Button>
-      {isOpen && (
+      {openDropdown === "language" && (
         <div
           className="absolute right-0 w-48 bg-white rounded-lg z-50"
           style={{
@@ -87,7 +101,7 @@ const LanguageDropdown = ({ user, currentLanguage }: { user: User | null; curren
               <div
                 key={code}
                 onClick={() => saveLanguage(code)}
-                className={`px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-default flex items-center gap-2 ${
+                className={`px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2 ${
                   selectedLanguage === code ? "bg-blue-100 font-semibold" : ""
                 }`}
               >

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import type React from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,6 +13,7 @@ import {
   Mic,
   Wand2,
   Pencil,
+  MoreHorizontal
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
@@ -28,7 +29,10 @@ import {
 } from "@icons-pack/react-simple-icons"
 import Image from "next/image"
 import "@/styles/button.css"
+import "@/styles/custom-buttons.css"
 import TextareaAutosize from "react-textarea-autosize"
+import { StyleSelector } from "@/components/ui/style-selector"
+import { GameTypeSelector } from "@/components/ui/game-type-selector"
 
 // Define Web Speech API types
 interface SpeechRecognition extends EventTarget {
@@ -82,7 +86,7 @@ const models: Record<
     description: "Fast and creative AI model.",
     features: ["fast", "vision"],
   },
-  "claude-3-5-sonnet": {
+  "claude-3.5-sonnet": {
     name: "Claude 3.5 Sonnet",
     author: "Anthropic",
     description: "Fast and strong conversational AI.",
@@ -133,15 +137,72 @@ const exampleData = {
 - Research tree for technology advancement and ship upgrades`,
 }
 
+interface SlashCommand {
+  id: string
+  name: string
+  description: string
+  usage: string
+}
+
+const slashCommands: SlashCommand[] = [
+  {
+    id: "edit",
+    name: "/edit",
+    description: "Edit the previous game or component",
+    usage: "/edit [your modifications]",
+  },
+  {
+    id: "add",
+    name: "/add",
+    description: "Add features to the current game",
+    usage: "/add [new features]",
+  },
+  {
+    id: "style",
+    name: "/style",
+    description: "Change the visual style of the current game",
+    usage: "/style [style changes]",
+  },
+  {
+    id: "fix",
+    name: "/fix",
+    description: "Fix bugs or issues in the current game",
+    usage: "/fix [describe the issue]",
+  },
+]
+
 interface ChatInputProps {
   inputPrompt: string
   setInputPrompt: (value: string) => void
-  onSendMessage: (model: string, language: string, discussMode?: boolean, files?: File[], searchMode?: boolean) => void
+  onSendMessage: (
+    model: string,
+    language: string,
+    discussMode?: boolean,
+    files?: File[],
+    searchMode?: boolean,
+    selectedStyle?: string,
+    selectedGameType?: string,
+    slashCommand?: string,
+  ) => void
   isGenerating: boolean
   setEditMode: (mode: boolean) => void
+  messages?: Array<{ id: string; sender: string; content: string; component_code?: string }>
 }
 
-export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenerating, setEditMode }: ChatInputProps) {
+function detectSlashCommand(prompt: string): string | null {
+  const commandPart = prompt.trim().slice(1).split(" ")[0]
+  const matchingCommand = slashCommands.find((cmd) => cmd.name.toLowerCase() === `/${commandPart.toLowerCase()}`)
+  return matchingCommand ? matchingCommand.id : null
+}
+
+export function ChatInput({
+  inputPrompt,
+  setInputPrompt,
+  onSendMessage,
+  isGenerating,
+  setEditMode,
+  messages = [],
+}: ChatInputProps) {
   const [model, setModel] = useState<string>("gemini-2.5-flash")
   const [language, setLanguage] = useState<string>("html")
   const [modelOpen, setModelOpen] = useState(false)
@@ -151,9 +212,87 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
   const [isRecording, setIsRecording] = useState(false)
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [selectedStyle, setSelectedStyle] = useState<string>("gaming")
+  const [selectedGameType, setSelectedGameType] = useState<string>("3d")
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [showSlashCommands, setShowSlashCommands] = useState(false)
+  const [slashCommandFilter, setSlashCommandFilter] = useState("")
+  const [selectedSlashCommand, setSelectedSlashCommand] = useState<string | null>(null)
+  const [toolsOpen, setToolsOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const trimmedPrompt = inputPrompt.trim()
+    if (trimmedPrompt.startsWith("/")) {
+      const commandPart = trimmedPrompt.slice(1).split(" ")[0]
+      setSlashCommandFilter(commandPart)
+      setShowSlashCommands(true)
+    } else {
+      setShowSlashCommands(false)
+      setSlashCommandFilter("")
+    }
+  }, [inputPrompt])
+
+  const filteredSlashCommands = slashCommands.filter((cmd) =>
+    cmd.name.toLowerCase().includes(`/${slashCommandFilter.toLowerCase()}`),
+  )
+
+  const handleSlashCommandSelect = (command: SlashCommand) => {
+    setSelectedSlashCommand(command.id)
+    setInputPrompt(`${command.name} `)
+    setShowSlashCommands(false)
+    textareaRef.current?.focus()
+  }
+
+  const processSlashCommand = (prompt: string, commandId: string): string => {
+    const gameMessages = messages.filter((msg) => msg.sender === "ai" && msg.component_code)
+
+    if (gameMessages.length === 0) {
+      // No previous games, create new one
+      switch (commandId) {
+        case "edit":
+          const editContent = prompt.replace("/edit", "").trim()
+          return `Create a new ${selectedGameType.toUpperCase()} game with these specifications: ${editContent}`
+        case "add":
+          const addContent = prompt.replace("/add", "").trim()
+          return `Create a new ${selectedGameType.toUpperCase()} game with these features: ${addContent}`
+        case "style":
+          const styleContent = prompt.replace("/style", "").trim()
+          return `Create a new ${selectedGameType.toUpperCase()} game with this visual style: ${styleContent}`
+        case "fix":
+          const fixContent = prompt.replace("/fix", "").trim()
+          return `Create a new ${selectedGameType.toUpperCase()} game avoiding this issue: ${fixContent}`
+        default:
+          return prompt
+      }
+    }
+
+    // Use the most recent game for slash commands
+    const lastGameMessage = gameMessages[gameMessages.length - 1]
+
+    switch (commandId) {
+      case "edit":
+        const editContent = prompt.replace("/edit", "").trim()
+        return `Please modify the previous ${selectedGameType.toUpperCase()} game: ${editContent}\n\nPrevious game context: ${lastGameMessage.content}`
+
+      case "add":
+        const addContent = prompt.replace("/add", "").trim()
+        return `Add these features to the current ${selectedGameType.toUpperCase()} game: ${addContent}\n\nCurrent game context: ${lastGameMessage.content}`
+
+      case "style":
+        const styleContent = prompt.replace("/style", "").trim()
+        return `Change the visual style of the current ${selectedGameType.toUpperCase()} game: ${styleContent}\n\nCurrent game context: ${lastGameMessage.content}`
+
+      case "fix":
+        const fixContent = prompt.replace("/fix", "").trim()
+        return `Fix this issue in the current ${selectedGameType.toUpperCase()} game: ${fixContent}\n\nCurrent game context: ${lastGameMessage.content}`
+
+      default:
+        return prompt
+    }
+  }
 
   const handleExampleClick = (exampleText: string) => {
     setInputPrompt(exampleText)
@@ -176,9 +315,31 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
     e.preventDefault()
     if (!isGenerating && inputPrompt.trim()) {
       console.log("Sending message with model:", model)
-      onSendMessage(model, language, discussMode, uploadedFiles, searchMode)
+
+      const detectedCommand = detectSlashCommand(inputPrompt)
+      let processedPrompt = inputPrompt
+
+      if (detectedCommand) {
+        processedPrompt = processSlashCommand(inputPrompt, detectedCommand)
+      }
+
+      // Update the input to show the processed prompt
+      if (detectedCommand) {
+        setInputPrompt(processedPrompt)
+      }
+
+      onSendMessage(
+        model,
+        language,
+        discussMode,
+        uploadedFiles,
+        searchMode,
+        selectedStyle,
+        selectedGameType,
+      )
       setUploadedFiles([])
       setSearchMode(false)
+      setSelectedSlashCommand(null)
     }
   }
 
@@ -328,6 +489,16 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showSlashCommands && (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "Tab")) {
+      e.preventDefault()
+      // Simple implementation - select first command on tab/enter
+      if (e.key === "Tab" && filteredSlashCommands.length > 0) {
+        handleSlashCommandSelect(filteredSlashCommands[0])
+      }
+    }
+  }
+
   return (
     <div className="p-6 bg-background">
       {!discussMode && (
@@ -395,6 +566,33 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                 </div>
               </div>
             )}
+
+            {showSlashCommands && filteredSlashCommands.length > 0 && (
+              <div
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-[#303030] rounded-lg z-50 max-h-48 overflow-y-auto" 
+              style={{
+                boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+              }}
+              >
+                <div className="p-2">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 px-2">Slash Commands</div>
+                  {filteredSlashCommands.map((command) => (
+                    <div
+                      key={command.id}
+                      className="flex items-start gap-3 p-2 hover:bg-[#88888811] rounded cursor-pointer"
+                      onClick={() => handleSlashCommandSelect(command)}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-sm text-[#0099FF] dark:text-blue-400">{command.name}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">{command.description}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{command.usage}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="rounded-2xl relative z-10 bg-background dark:bg-[#303030] border dark:border-[#444444]">
               <div className="flex items-center px-3 py-2 gap-1">
                 <Popover open={modelOpen} onOpenChange={setModelOpen}>
@@ -488,6 +686,12 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                     </PopoverContent>
                   </Popover>
                 )}
+                {!discussMode && (
+                  <>
+                    <GameTypeSelector selectedType={selectedGameType} onTypeChange={setSelectedGameType} />
+                    <StyleSelector selectedStyle={selectedStyle} onStyleChange={setSelectedStyle} />
+                  </>
+                )}
                 <Button
                   variant="ghost"
                   className={`h-8 px-3 hover:bg-[#88888811] rounded-lg border-0 font-medium text-xs ${
@@ -502,22 +706,9 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   <Pencil className="h-4 w-4 mr-2" />
                   <span className="hidden md:inline">Edit</span>
                 </Button>
-                <Button
-                  variant="ghost"
-                  className={`h-8 px-3 hover:bg-[#88888811] rounded-lg border-0 font-medium text-xs ${
-                    discussMode
-                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-[#0099ff34] text-accent-foreground dark:text-accent-foreground"
-                      : "text-muted-foreground hover:text-muted-foreground"
-                  }`}
-                  onClick={() => setDiscussMode(!discussMode)}
-                  aria-label="Toggle discuss mode"
-                  title={discussMode ? "Exit discuss mode" : "Enter discuss mode"}
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  <span className="hidden md:inline">Discuss</span>
-                </Button>
               </div>
               <TextareaAutosize
+                ref={textareaRef}
                 autoFocus={true}
                 minRows={1}
                 maxRows={5}
@@ -526,10 +717,13 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                 placeholder={
                   discussMode
                     ? "Ask me anything about game development, 3D graphics, or professional game design..."
-                    : "Describe your dream game - I'll create a complete 3D experience with lobbies, realistic assets, and professional gameplay systems."
+                    : selectedSlashCommand
+                      ? "Continue typing your command..."
+                      : `Describe your dream ${selectedGameType.toUpperCase()} game - I'll create it with ${selectedStyle} button style. Try /edit, /add, /style, or /fix to modify existing games.`
                 }
                 value={inputPrompt}
                 onChange={(e) => setInputPrompt(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
               <div className="flex p-3 gap-2 items-center">
                 <input
@@ -540,63 +734,98 @@ export function ChatInput({ inputPrompt, setInputPrompt, onSendMessage, isGenera
                   onChange={handleFileUpload}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                  title="Upload 3D models, textures, or reference images"
-                >
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchMode(!searchMode)}
-                  className={`h-8 w-8 p-0 ${
-                    searchMode
-                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                  title={
-                    searchMode
-                      ? "Disable web search for latest game dev resources"
-                      : "Enable web search for latest game dev resources"
-                  }
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleMicClick}
-                  className={`h-8 w-8 p-0 ${
-                    isRecording
-                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                  title={isRecording ? "Stop recording" : "Start voice input"}
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleEnhanceClick}
-                  disabled={isEnhancing || !inputPrompt.trim()}
-                  className={`h-8 w-8 p-0 ${
-                    isEnhancing
-                      ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                  title={isEnhancing ? "Enhancing prompt..." : "Enhance prompt with AI"}
-                >
-                  <Wand2 className="h-4 w-4" />
-                </Button>
+                <Popover open={toolsOpen} onOpenChange={setToolsOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="h-8 px-3 hover:bg-[#88888811] text-muted-foreground hover:text-muted-foreground rounded-lg border-0 font-medium text-xs"
+                      aria-label="Show tools"
+                      title="Show tools"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[200px]">
+                    <div className="flex flex-col gap-1 p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-8 w-full justify-start text-gray-400 hover:text-gray-600"
+                        title="Upload 3D models, textures, or reference images"
+                      >
+                        <Paperclip className="h-4 w-4 mr-2" />
+                        Upload Files
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearchMode(!searchMode)}
+                        className={`h-8 w-full justify-start ${
+                          searchMode
+                            ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                        title={
+                          searchMode
+                            ? "Disable web search for latest game dev resources"
+                            : "Enable web search for latest game dev resources"
+                        }
+                      >
+                        <Search className="h-4 w-4 mr-2" />
+                        Web Search
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleMicClick}
+                        className={`h-8 w-full justify-start ${
+                          isRecording
+                            ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                        title={isRecording ? "Stop recording" : "Start voice input"}
+                      >
+                        <Mic className="h-4 w-4 mr-2" />
+                        Voice Input
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleEnhanceClick}
+                        disabled={isEnhancing || !inputPrompt.trim()}
+                        className={`h-8 w-full justify-start ${
+                          isEnhancing
+                            ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                        title={isEnhancing ? "Enhancing prompt..." : "Enhance prompt with AI"}
+                      >
+                        <Wand2 className="h-4 w-4 mr-2" />
+                        Enhance Prompt
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDiscussMode(!discussMode)}
+                        className={`h-8 w-full justify-start ${
+                          discussMode
+                            ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                        title={discussMode ? "Exit discuss mode" : "Enter discuss mode"}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Discuss Mode
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <div className="flex items-center flex-1 gap-2"></div>
                 <Button
                   disabled={isGenerating || !inputPrompt.trim() || !model || (!discussMode && !language)}
