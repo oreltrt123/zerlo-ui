@@ -404,7 +404,12 @@ export default function SettingsPage() {
   const t = translations[language] || translations.en
 
   return (
-    <div className="settings-container">
+    <div className="settings-container"     style={{
+      backgroundSize: "100% auto", // full width, auto height
+      backgroundPosition: "center -130px", // move image down
+      backgroundRepeat: "no-repeat",
+      backgroundImage: 'url("/assets/images/bg.jpg")'
+    }}>
       <style>{styles}</style>
       <h1 className="settings-title">{t.title}</h1>
 

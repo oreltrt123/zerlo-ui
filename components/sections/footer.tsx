@@ -1,4 +1,8 @@
-import { createClient } from "@/supabase/server";
+"use client";
+
+import { useState } from "react";
+import LanguageDropdown from "@/components/language-dropdown";
+import { User } from "@supabase/supabase-js";
 
 // Translations for Footer UI strings by language code
 const translations: Record<string, {
@@ -16,8 +20,9 @@ const translations: Record<string, {
       { label: "Contact Us", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "Feature Request", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "More about Zerlo", href: "/about/about-zerlo" },
+      { label: "Academy", href: "/academy" },
     ],
   },
   fr: {
@@ -30,7 +35,7 @@ const translations: Record<string, {
       { label: "Contactez-nous", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "Demande de fonctionnalité", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "En savoir plus sur Zerlo", href: "/about/about-zerlo" },
     ],
   },
@@ -44,9 +49,8 @@ const translations: Record<string, {
       { label: "צור קשר", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "בקשת תכונה", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "יותר על זרלו", href: "/about/about-zerlo" },
-
     ],
   },
   zh: {
@@ -59,9 +63,8 @@ const translations: Record<string, {
       { label: "联系我们", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "功能请求", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "More about Zerlo", href: "/about/about-zerlo" },
-
     ],
   },
   ar: {
@@ -74,7 +77,7 @@ const translations: Record<string, {
       { label: "اتصل بنا", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "طلب ميزة", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
@@ -88,7 +91,7 @@ const translations: Record<string, {
       { label: "Свяжитесь с нами", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "Запрос функции", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
@@ -102,17 +105,21 @@ const translations: Record<string, {
       { label: "संपर्क करें", href: "/contact" },
       { label: "About", href: "/about" },
       { label: "सुविधा का अनुरोध", href: "https://zerlo.featurebase.app/" },
-      { label: "Join Discord", href: "https://discord.gg/KyHjB6zc" },
+      { label: "Join Discord", href: "https://discord.gg/DD85kUZj" },
       { label: "More about Zerlo", href: "/about/about-zerlo" },
     ],
   },
 };
 
-export default async function Footer() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+// Define props type for the Footer component
+interface FooterProps {
+  user: User | null;
+}
+
+export default function Footer({ user }: FooterProps) {
   const language = user?.user_metadata?.language || "en"; // Fallback to English if no user or language
   const currentTexts = translations[language] || translations.en;
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   return (
     <footer className="w-full py-8 px-4 z-50">
@@ -145,6 +152,12 @@ export default async function Footer() {
                 {link.label}
               </a>
             ))}
+            <LanguageDropdown
+              user={user}
+              currentLanguage={language}
+              openDropdown={openDropdown}
+              setOpenDropdown={setOpenDropdown}
+            />
           </div>
         </div>
       </div>

@@ -160,7 +160,12 @@ export default function PasswordSettingsPage() {
   const t = translations[language] || translations.en
 
   return (
-    <div className="password-settings">
+    <div className="password-settings"     style={{
+      backgroundSize: "100% auto", // full width, auto height
+      backgroundPosition: "center -130px", // move image down
+      backgroundRepeat: "no-repeat",
+      backgroundImage: 'url("/assets/images/bg.jpg")'
+    }}>
       <style>{styles}</style>
       <h1 className="text-2xl font-bold mb-4">{t.title}</h1>
       <div className="form-group">

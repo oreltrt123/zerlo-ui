@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { createClient } from "@/supabase/server"
+import { createServerClient } from "@/supabase/server" // updated import
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createServerClient() // use server client
 
   const data = {
     email: formData.get("email") as string,
@@ -23,7 +23,7 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createServerClient() // use server client
 
   const data = {
     email: formData.get("email") as string,
@@ -41,9 +41,8 @@ export async function signup(formData: FormData) {
 }
 
 export async function logout() {
-  const supabase = await createClient()
+  const supabase = await createServerClient() // use server client
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
   redirect("/login")
 }
-

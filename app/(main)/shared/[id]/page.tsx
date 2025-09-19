@@ -37,7 +37,7 @@ export default function SharedChatPage() {
   const [chat, setChat] = useState<SharedChat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
-  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings" | "assets">("preview")
+  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings" | "assets" | "terminal">("preview")
   const [editMode, setEditMode] = useState<boolean>(false)
   const [isComponentVisible, setIsComponentVisible] = useState<boolean>(false)
   const [isAnimating, setIsAnimating] = useState<boolean>(false)

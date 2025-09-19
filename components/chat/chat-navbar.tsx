@@ -13,16 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { Link, LogOut, Settings } from "lucide-react"
 import { GitHubLogoIcon, DiscordLogoIcon, TwitterLogoIcon } from "@radix-ui/react-icons"
 import "@/styles/button.css"
+import { CreditsDisplay } from "@/components/credits/credits-display"
 
 interface ChatNavbarProps {
   chatName: string
@@ -35,11 +31,21 @@ interface ChatNavbarProps {
   user: { id: string; email?: string; user_metadata?: { avatar_url?: string } } | null
   showLogin: () => void
   signOut: () => void
-  onSocialClick: (target: 'github' | 'x' | 'discord') => void
+  onSocialClick: (target: "github" | "x" | "discord") => void
   onSettingsClick: () => void
+  onUpgradeClick: () => void
 }
 
-export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSocialClick, onSettingsClick }: ChatNavbarProps) {
+export function ChatNavbar({
+  chatName,
+  messages,
+  user,
+  showLogin,
+  signOut,
+  onSocialClick,
+  onSettingsClick,
+  onUpgradeClick,
+}: ChatNavbarProps) {
   const [showDeployModal, setShowDeployModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const deployButtonRef = useRef<HTMLButtonElement>(null)
@@ -52,8 +58,14 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
     console.log("=== ChatNavbar Debug ===")
     console.log("Total messages:", messages.length)
     console.log("All messages:", messages)
-    console.log("Messages with component_code:", messages.filter((msg) => msg.component_code))
-    console.log("AI messages:", messages.filter((msg) => msg.sender === "ai"))
+    console.log(
+      "Messages with component_code:",
+      messages.filter((msg) => msg.component_code),
+    )
+    console.log(
+      "AI messages:",
+      messages.filter((msg) => msg.sender === "ai"),
+    )
     console.log("Deployable messages:", deployableMessages)
     console.log("Has deployable messages:", hasDeployableMessages)
     console.log("User:", user)
@@ -81,10 +93,13 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-[#0f1419] dark:text-[#f0f6fc] font-[600] text-base">{chatName}</h2>
+            {user && <CreditsDisplay onUpgradeClick={onUpgradeClick} />}
           </div>
           <div className="flex items-center gap-1 md:gap-4">
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {hasDeployableMessages ? `${messages.filter((msg) => msg.component_code && msg.sender === "ai").length} component(s) ready` : "No components to deploy"}
+              {hasDeployableMessages
+                ? `${messages.filter((msg) => msg.component_code && msg.sender === "ai").length} component(s) ready`
+                : "No components to deploy"}
             </span>
 
             <TooltipProvider>
@@ -133,7 +148,7 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
                 <TooltipContent>Share chat</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             <TooltipProvider>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -149,7 +164,7 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
                 <TooltipContent>Chat settings</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             <TooltipProvider>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -167,12 +182,14 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
                       <DropdownMenuTrigger asChild>
                         <Avatar className="w-8 h-8">
                           <AvatarImage
-                            src={user.user_metadata?.avatar_url || `https://avatar.vercel.sh/${user.email || 'default'}`}
-                            style={{borderRadius: "100%"}}
-                            alt={user.email || 'User'}
+                            src={
+                              user.user_metadata?.avatar_url || `https://avatar.vercel.sh/${user.email || "default"}`
+                            }
+                            style={{ borderRadius: "100%" }}
+                            alt={user.email || "User"}
                           />
                           <AvatarFallback className="bg-gray-700 dark:bg-gray-600 text-white">
-                            {user.email?.charAt(0).toUpperCase() || 'U'}
+                            {user.email?.charAt(0).toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
                       </DropdownMenuTrigger>
@@ -180,19 +197,14 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
                     <TooltipContent>My Account</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56"
-                >
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="flex flex-col">
                     <span className="text-sm">My Account</span>
-                    <span className="text-xs text-muted-foreground">
-                      {user.email || 'No email provided'}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{user.email || "No email provided"}</span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => window.open('https://www.zerlo.online/about', '_blank')}
+                    onClick={() => window.open("https://www.zerlo.online/about", "_blank")}
                     className="text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
                   >
                     <svg
@@ -209,21 +221,21 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
                     About Zerlo
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => onSocialClick('github')}
+                    onClick={() => onSocialClick("github")}
                     className="text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
                   >
                     <GitHubLogoIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                     Star on GitHub
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => onSocialClick('discord')}
+                    onClick={() => onSocialClick("discord")}
                     className="text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
                   >
                     <DiscordLogoIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                     Join us on Discord
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => onSocialClick('x')}
+                    onClick={() => onSocialClick("x")}
                     className="text-muted-foreground hover:text-muted-foreground hover:bg-[#8888881A]"
                   >
                     <TwitterLogoIcon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -271,8 +283,19 @@ export function ChatNavbar({ chatName, messages, user, showLogin, signOut, onSoc
           </div>
         </div>
       </div>
-      <DeployModal isOpen={showDeployModal} onClose={() => setShowDeployModal(false)} onOtherClose={() => setShowShareModal(false)} messages={messages} buttonRef={deployButtonRef} />
-      <ShareModal isOpen={showShareModal} onClose={() => setShowShareModal(false)} onOtherClose={() => setShowDeployModal(false)} buttonRef={shareButtonRef} />
+      <DeployModal
+        isOpen={showDeployModal}
+        onClose={() => setShowDeployModal(false)}
+        onOtherClose={() => setShowShareModal(false)}
+        messages={messages}
+        buttonRef={deployButtonRef}
+      />
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        onOtherClose={() => setShowDeployModal(false)}
+        buttonRef={shareButtonRef}
+      />
     </>
   )
 }

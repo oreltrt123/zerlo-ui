@@ -1,4 +1,4 @@
-import { createClient } from '@/supabase/server';
+import { createServerClient } from '@/supabase/server'; // ✅ updated import
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   const plainKey = authHeader.split(' ')[1];
-  const supabase = await createClient();
+  const supabase = await createServerClient(); // ✅ use server client
 
   // Validate API key
   const { data: keys, error } = await supabase.from('api_keys').select('user_id, key_hash, revoked_at');
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { gamePrompt } = body; // Renamed from 'prompt' to avoid unused variable warning
+  const { gamePrompt } = body;
   if (!gamePrompt) {
     console.error('Missing prompt in request body');
     return NextResponse.json({ error: 'Missing prompt', code: 400 }, { status: 400 });
@@ -52,16 +52,8 @@ export async function POST(request: Request) {
   }
 }
 
-async function generate3DGame(){
-  // Replace with your AI integration (e.g., Google Gemini)
-  // Example:
-  // import { GoogleGenerativeAI } from '@google/generative-ai';
-  // const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  // const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-  // const result = await model.generateContent(`Generate HTML for a 3D game using Three.js: ${gamePrompt}`);
-  // return result.response.text();
-
-  // Placeholder
+async function generate3DGame() {
+  // Placeholder 3D game HTML using Three.js
   return `
 <!DOCTYPE html>
 <html>

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/supabase/server"
+import { createServerClient } from "@/supabase/server" // ✅ updated import
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user authentication
-    const supabase = await createClient()
+    const supabase = await createServerClient() // ✅ use server client
     const {
       data: { user },
       error: authError,
@@ -41,13 +41,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Deployment not found" }, { status: 404 })
     }
 
-    // Clean the component code to remove any export statements and make it standalone
+    // Clean the component code
     const cleanedComponentCode = componentCode
       .replace(/export\s+default\s+/g, "")
       .replace(/export\s+/g, "")
       .replace(/import\s+.*?from\s+['"].*?['"];?\s*/g, "")
 
-    // Create the HTML content for the deployed site
+    // Create the HTML content
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,12 +74,10 @@ export async function POST(request: NextRequest) {
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback, useRef } = React;
         
-        // Define the component
         function Component() {
             ${cleanedComponentCode}
         }
         
-        // Render the component
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(Component));
     </script>
@@ -88,9 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Create directory if it doesn't exist
     const deployDir = join(process.cwd(), "public", "deployed")
-    await mkdir(deployDir, { recursive: true }).catch(() => {
-      // Directory might already exist, that's okay
-    })
+    await mkdir(deployDir, { recursive: true }).catch(() => {})
 
     // Write the HTML file
     const filePath = join(deployDir, `${siteName}.html`)
@@ -99,9 +95,7 @@ export async function POST(request: NextRequest) {
     // Update deployment status
     await supabase
       .from("deployed_sites")
-      .update({
-        updated_at: new Date().toISOString(),
-      })
+      .update({ updated_at: new Date().toISOString() })
       .eq("id", deploymentId)
 
     return NextResponse.json({

@@ -166,7 +166,7 @@ export default function HeroImg() {
             <div className="space-y-4">
               <div className="flex items-center space-x-2 relative">
                 <Image
-                  src="/assets/images/zerlo-img.png"
+                  src="/section.jpeg"
                   alt="Default User Avatar"
                   width={1090}
                   height={1090}

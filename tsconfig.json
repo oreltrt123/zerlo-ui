@@ -22,6 +22,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/`ServerIntegrationModal.tsx`", "components/`AutoAuthGenerator.tsx`"],
   "exclude": ["node_modules"]
 }

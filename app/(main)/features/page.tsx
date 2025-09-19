@@ -1,7 +1,7 @@
 import Navbar from "@/components/navbar";
 import Footer from "@/components/sections/footer";
 import Image from "next/image";
-import { createClient } from "@/supabase/server";
+import { createServerClient } from "@/supabase/server";
 
 // Translations for Features UI strings by language code
 const translations: Record<string, {
@@ -532,17 +532,27 @@ const translations: Record<string, {
 };
 
 export default async function Features() {
-  const supabase = await createClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   const language = user?.user_metadata?.language || "en"; // Fallback to English if no user or language
   const currentTexts = translations[language] || translations.en;
 
   return (
-    <div>
+    <div 
+      style={{
+        backgroundImage: 'url("/Z_bg.png")',
+        backgroundSize: "cover",        // cover both width & height
+        backgroundPosition: "center",   // center the image
+        backgroundRepeat: "no-repeat",  // no repeat
+        backgroundAttachment: "fixed",  // keeps it fixed when scrolling
+        height: "100vh",                // full screen height
+        width: "100%"                   // full width
+      }}
+    >
       <Navbar />
       <div className="px-4 py-16 mx-auto sm:max-w-xl md:max-w-full lg:max-w-screen-xl md:px-24 lg:px-8 lg:py-20">
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -559,7 +569,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -576,7 +586,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -593,7 +603,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -610,7 +620,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -627,7 +637,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -644,7 +654,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -661,7 +671,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -678,7 +688,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -695,7 +705,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -712,7 +722,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -729,7 +739,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -746,7 +756,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -763,7 +773,7 @@ export default async function Features() {
               </p>
             </div>
           </div>
-          <div className="p-8 bg-[#8888881A] rounded-2xl">
+          <div className="p-8 bg-[#ffffff] rounded-2xl">
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full sm:w-16 sm:h-16">
                 <Image
@@ -782,7 +792,7 @@ export default async function Features() {
           </div>
         </div>
       </div>
-      <Footer />
+      <Footer user={user} />
     </div>
   );
 }

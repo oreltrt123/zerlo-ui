@@ -1,4 +1,4 @@
-import { createClient } from "@/supabase/server" 
+import { createServerClient } from "@/supabase/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Zap, Code, Gamepad2, Server, Rocket, Users, Globe } from "lucide-react"
@@ -473,7 +473,7 @@ const translations: Record<
     },
     cta: {
       title: "مستعد لإنشاء شيء مذهل؟",
-      description: "انضم إلى آلاف المبد��ين الذين يبنون المستقبل بالفعل مع منصة زيرلو المدعومة بالذكاء الاصطناعي",
+      description: "انضم إلى آلاف المبدعين الذين يبنون المستقبل بالفعل مع منصة زيرلو المدعومة بالذكاء الاصطناعي",
       primaryButton: "ابدأ الإنشاء الآن",
       secondaryButton: "تعلم المزيد",
     },
@@ -632,7 +632,7 @@ const translations: Record<
     },
     cta: {
       title: "कुछ अद्भुत बनाने के लिए तैयार हैं?",
-      description: "हजारों रचनाकारों से जुड़ें जो पहले से ही ज़रलो के AI-संचालित प्लेटफॉर्म के साथ भविष्य का निर्माण कर रहे हैं",
+      description: "हزارों रचनाकारों से जुड़ें जो पहले से ही ज़रलो के AI-संचालित प्लेटफॉर्म के साथ भविष्य का निर्माण कर रहे हैं",
       primaryButton: "अभी बनाना शुरू करें",
       secondaryButton: "और जानें",
     },
@@ -644,7 +644,7 @@ const translations: Record<
 }
 
 export default async function AboutPage() {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -865,7 +865,7 @@ export default async function AboutPage() {
           <h2 style={{fontSize: "50px"}} className="text-black mb-2 text-2xl font-sans font-light leading-relaxed max-w-3xl mx-auto text-center">{t.cta.title}</h2>
         </div>
       </section>
-    <Footer />
+    <Footer user={user} />
     </div>
   )
 }

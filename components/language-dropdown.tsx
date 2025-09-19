@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import "@/styles/dropdown.css";
 
 // Language codes, labels, and flag URLs for selection
 const languages = [
@@ -69,9 +69,9 @@ const LanguageDropdown = ({ user, currentLanguage, openDropdown, setOpenDropdown
 
   return (
     <div className="relative">
-      <Button
+      <button
         onClick={toggleDropdown}
-        variant={'blueFont'}
+        className="cursor-pointer hover:underline flex flex-wrap justify-start gap-x-6 gap-y-2 text-sm text-gray-700 font-medium"
       >
         <span>{languages.find(lang => lang.code === selectedLanguage)?.label || "Language"}</span>
         <svg
@@ -87,32 +87,43 @@ const LanguageDropdown = ({ user, currentLanguage, openDropdown, setOpenDropdown
         >
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
-      </Button>
+      </button>
       {openDropdown === "language" && (
         <div
           className="absolute right-0 w-48 bg-white rounded-lg z-50"
           style={{
             boxShadow:
               "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+            top: "-200px", // Adjust this value to move the dropdown upward (e.g., negative offset)
           }}
         >
-          <div className="py-2">
+          <div className="menu_container_select_ui">
             {languages.map(({ code, label, flag }) => (
               <div
                 key={code}
                 onClick={() => saveLanguage(code)}
-                className={`px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2 ${
-                  selectedLanguage === code ? "bg-blue-100 font-semibold" : ""
+                className={`menu_item_select_ui ${
+                  selectedLanguage === code
+                    ? "text-white font-semibold"
+                    : ""
                 }`}
               >
                 <Image
                   src={flag}
                   alt={`${label} flag`}
-                  width={24} // Matches w-6 (6 * 4 = 24px)
-                  height={24} // Matches h-6 (6 * 4 = 24px)
-                  className="object-cover" // Ensure the image fits nicely
+                  width={24}
+                  height={24}
+                  className="object-cover"
                 />
-                {label}
+                <span
+                  className={`${
+                    selectedLanguage === code
+                      ? "text-white font-semibold"
+                      : ""
+                  }`}
+                >
+                  {label}
+                </span>
               </div>
             ))}
           </div>

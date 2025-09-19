@@ -4,74 +4,109 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import AccountMenu from "@/components/account-menu";
-import LanguageDropdown from "@/components/language-dropdown";
+// import LanguageDropdown from "@/components/language-dropdown";
 import type { User } from "@supabase/supabase-js";
+import Image from "next/image";
 
 // Translations for Navbar UI strings by language code
-const translations: Record<string, {
-  logo: string;
-  blog: string;
-  about: string;
-  features: string;
-  login: string;
-}> = {
+const translations: Record<
+  string,
+  {
+    logo: string;
+    resources: string;
+    blog: string;
+    academy: string;
+    about: string;
+    features: string;
+    login: string;
+    community: string;
+  }
+> = {
   en: {
     logo: "Zerlo",
+    resources: "Resources",
     blog: "Blog",
+    academy: "Academy",
     about: "About",
     features: "Features",
     login: "Log In",
+    community: "Community",
   },
   fr: {
     logo: "Zerlo",
+    resources: "Ressources",
     blog: "Blog",
+    academy: "Académie",
     about: "À propos",
     features: "Fonctionnalités",
     login: "Se connecter",
+    community: "communauté",
   },
   he: {
     logo: "זרלו",
+    resources: "משאבים",
     blog: "בלוג",
+    academy: "אקדמיה",
     about: "אודות",
     features: "תכונות",
     login: "התחבר",
+    community: "קהילה",
   },
   zh: {
     logo: "Zerlo",
+    resources: "资源",
     blog: "博客",
+    academy: "学院",
     about: "关于",
     features: "功能",
     login: "登录",
+    community: "社区",
   },
   ar: {
     logo: "زيرلو",
+    resources: "موارد",
     blog: "مدونة",
+    academy: "أكاديمية",
     about: "حول",
     features: "الميزات",
     login: "تسجيل الدخول",
+    community: "مجتمع",
   },
   ru: {
     logo: "Zerlo",
+    resources: "Ресурсы",
     blog: "Блог",
+    academy: "Академия",
     about: "О нас",
     features: "Функции",
     login: "Войти",
+    community: "сообщество",
   },
   hi: {
     logo: "ज़रलो",
+    resources: "संसाधन",
     blog: "ब्लॉग",
+    academy: "अकादमी",
     about: "के बारे में",
     features: "विशेषताएँ",
     login: "लॉग इन",
+    community: "समुदाय",
   },
 };
 
 export default function Navbar() {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [language, setLanguage] = useState("en");
   const [loading, setLoading] = useState(true);
+  const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -91,6 +126,13 @@ export default function Navbar() {
   }, []);
 
   const currentTexts = translations[language] || translations.en;
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const getNavColor = (item: string) => {
+    if (hoveredNavItem === null) return "text-black/70";
+    if (hoveredNavItem === item) return "text-black";
+    return "text-black/30";
+  };
 
   if (loading) {
     return null; // Prevent rendering until user data is fetched
@@ -98,33 +140,95 @@ export default function Navbar() {
 
   return (
     <nav className="fixed left-1/2 transform -translate-x-1/2 w-full z-50">
-      <div className="backdrop-blur-md bg-[#cec2c21a] px-6 py-3 flex items-center justify-between relative">
+      <div className="backdrop-blur-md bg-[#cec2c20c] px-6 py-3 flex items-center justify-between relative">
         {/* Logo Section */}
         <div className="flex items-center">
           <Link href="/">
-            <h1 className="text-2xl font-bold relative top-[-2px] text-black/70 cursor-pointer">
-              {currentTexts.logo}
+            <h1 className="flex items-center gap-2 text-2xl text-black font-sans font-light leading-relaxed">
+              <Image
+                src="/logo.png"
+                alt="Zerlo Logo"
+                width={50} // Normal size (adjust if needed)
+                height={50}
+                className="object-contain absolute"
+              />
+              <span className="relative left-[50px]">{currentTexts.logo}</span>
             </h1>
           </Link>
         </div>
 
+
         {/* Centered Navigation Links */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-6">
-          <Link
-            href="/blog"
-            className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-pointer"
-          >
-            {currentTexts.blog}
-          </Link>
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-6 items-center">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem
+                onMouseEnter={() => setHoveredNavItem("resources")}
+                onMouseLeave={() => setHoveredNavItem(null)}
+              >
+                <NavigationMenuTrigger
+                  className={`${getNavColor("resources")} font-sans font-light transition-colors duration-200 cursor-pointer`}
+                >
+                  {currentTexts.resources}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[200px] gap-3">
+                    <li>
+                      <Link
+                        href="/blog"
+                        className="flex items-center gap-[10px] font-sans font-light select-none rounded-md px-3 py-2 text-lg text-black/70 hover:bg-gray-100 hover:text-black/60"
+                      >
+                        <Image
+                          className="w-[24px] h-[24px]"
+                          src="/assets/images/blog.png"
+                          alt="test"
+                          width={48}
+                          height={48}
+                        />
+                        {currentTexts.blog}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/academy"
+                        className="flex items-center gap-[10px] font-sans font-light select-none rounded-md px-3 py-2 text-lg text-black/70 hover:bg-gray-100 hover:text-black/60"
+                      >
+                        <Image
+                          className="w-[24px] h-[24px]"
+                          src="/assets/images/academy.png"
+                          alt="test"
+                          width={48}
+                          height={48}
+                        />
+                        {currentTexts.academy}
+                      </Link>
+                    </li>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
           <Link
             href="/about"
-            className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-pointer"
+            onMouseEnter={() => setHoveredNavItem("about")}
+            onMouseLeave={() => setHoveredNavItem(null)}
+            className={`${getNavColor("about")} font-sans font-light transition-colors duration-200 cursor-pointer`}
           >
             {currentTexts.about}
           </Link>
           <Link
+            href="/community"
+            onMouseEnter={() => setHoveredNavItem("community")}
+            onMouseLeave={() => setHoveredNavItem(null)}
+            className={`${getNavColor("community")} font-sans font-light transition-colors duration-200 cursor-pointer`}
+          >
+            {currentTexts.community}
+          </Link>
+          <Link
             href="/features"
-            className="text-black/70 hover:text-black/60 font-medium transition-colors duration-200 cursor-pointer"
+            onMouseEnter={() => setHoveredNavItem("features")}
+            onMouseLeave={() => setHoveredNavItem(null)}
+            className={`${getNavColor("features")} font-sans font-light transition-colors duration-200 cursor-pointer`}
           >
             {currentTexts.features}
           </Link>
@@ -132,7 +236,7 @@ export default function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-4">
-          {/* New Buttons for LinkedIn and X */}
+          {/* Social Media Buttons */}
           <div className="flex items-center gap-2">
             <Button
               asChild
@@ -141,7 +245,7 @@ export default function Navbar() {
               className="text-black/70 hover:text-black/60 transition-colors duration-200 w-8 h-8"
               aria-label="Join our Discord"
             >
-              <Link href="https://discord.gg/KyHjB6zc" target="_blank" rel="noopener noreferrer">
+              <Link href="https://discord.gg/DD85kUZj" target="_blank" rel="noopener noreferrer">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -187,7 +291,7 @@ export default function Navbar() {
                   viewBox="0 0 24 24"
                   fill="currentColor"
                 >
-                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-1.337-.02-3.06-1.867-3.06-1.867 0-2.153 1.459-2.153 2.966v5.698h-3v-11h2.879v1.504h.04c.401-.757 1.379-1.557 2.837-1.557 3.036 0 3.604 2 3.604 4.604v6.449z"/>
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-1.337-.02-3.06-1.867-3.06-1.867 0-2.153 1.459-2.153 2.966v5.698h-3v-11h2.879v1.504h.04c.401-.757 1.379-1.557 2.837-1.557 3.036 0 3.604 2 3.604 4.604v6.449z" />
                 </svg>
               </Link>
             </Button>
@@ -206,17 +310,17 @@ export default function Navbar() {
                   viewBox="0 0 24 24"
                   fill="currentColor"
                 >
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </Link>
             </Button>
           </div>
-          <LanguageDropdown
+          {/* <LanguageDropdown
             user={user}
             currentLanguage={language}
             openDropdown={openDropdown}
             setOpenDropdown={setOpenDropdown}
-          />
+          /> */}
           {user ? (
             <AccountMenu
               user={user}

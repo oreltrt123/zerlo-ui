@@ -1,8 +1,5 @@
-import { createClient } from '@/supabase/server';
-// import { Button } from '@/components/ui/button';
+import { createServerClient } from '@/supabase/server';
 import Link from 'next/link';
-// import AccountMenu from '@/components/account-menu';
-// import LanguageDropdown from '@/components/language-dropdown';
 
 // Translations for Navbar UI strings by language code
 const translations: Record<string, { 
@@ -12,66 +9,24 @@ const translations: Record<string, {
   features: string; 
   login: string;
 }> = { 
-  en: { 
-    logo: "Zerlo", 
-    blog: "Blog", 
-    about: "About", 
-    features: "Features", 
-    login: "Log In", 
-  }, 
-  fr: { 
-    logo: "Zerlo", 
-    blog: "Blog", 
-    about: "About", 
-    features: "Functionality", 
-    login: "Se connecter", 
-  }, 
-  he: {
-    logo: "Zarlo", 
-    blog: "blog", 
-    about: "About", 
-    features: "features", 
-    login: "log in", 
-  }, 
-  zh: { 
-    logo: "Zerlo", 
-    blog: "blog", 
-    about: "about", 
-    features: "funcción", 
-    login: "login", 
-  }, 
-  ar: { 
-    logo: "Zirlo", 
-    blog: "Blog", 
-    about: "about", 
-    features: "Al-Mizat", 
-    login: "login", 
-  }, 
-  ru: { 
-    logo: "Zerlo", 
-    blog: "Блог", 
-    about: "О нас", 
-    features: "Functions", 
-    login: "Login", 
-  }, 
-  hi: { 
-    logo: "Zarlo", 
-    blog: "blog", 
-    about: "about it", 
-    features: "features",
-    login: "Log in", 
-  },
+  en: { logo: "Zerlo", blog: "Blog", about: "About", features: "Features", login: "Log In" }, 
+  fr: { logo: "Zerlo", blog: "Blog", about: "About", features: "Functionality", login: "Se connecter" },
+  he: { logo: "Zarlo", blog: "blog", about: "About", features: "features", login: "log in" },
+  zh: { logo: "Zerlo", blog: "blog", about: "about", features: "funcción", login: "login" },
+  ar: { logo: "Zirlo", blog: "Blog", about: "about", features: "Al-Mizat", login: "login" },
+  ru: { logo: "Zerlo", blog: "Блог", about: "О нас", features: "Functions", login: "Login" },
+  hi: { logo: "Zarlo", blog: "blog", about: "about it", features: "features", login: "Log in" },
 };
 
 export default async function Navbar() { 
-  const supabase = await createClient(); 
+  const supabase = await createServerClient(); // ✅ use server client
   const { data: { user } } = await supabase.auth.getUser(); 
-  const language = user?.user_metadata?.language || "en"; // Fallback to English if no user or language 
+  const language = user?.user_metadata?.language || "en"; // fallback to English
   const currentTexts = translations[language] || translations.en; 
 
   return ( 
     <nav className="fixed top-0 left-0 right-0 z-50"> 
-      <div className="bg-[#ffffff] border-b backdrop-blur-md px-6 py-3 flex items-center justify-between  mx-auto"> 
+      <div className="bg-[#ffffff] border-b backdrop-blur-md px-6 py-3 flex items-center justify-between mx-auto"> 
         {/* Logo Section */} 
         <div className="flex items-center"> 
           <Link href="/docs"> 
@@ -80,21 +35,6 @@ export default async function Navbar() {
             </h1> 
           </Link> 
         </div> 
-
-        {/* Right Side Actions */} 
-        {/* <div className="flex items-center gap-4"> 
-          <LanguageDropdown user={user} currentLanguage={language} /> 
-          {user ? ( 
-            <AccountMenu user={user} /> 
-          ) : ( 
-            <Button 
-              asChild 
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 py-2 transition-all duration-200 hover:shadow-md"
-            >
-              <Link href="/login">{currentTexts.login}</Link>
-            </Button>
-          )}
-        </div> */}
       </div>
     </nav>
   );

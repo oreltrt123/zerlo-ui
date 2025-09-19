@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/supabase/server';
+import { createServerClient } from '@/supabase/server'; // ✅ updated import
 
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json();
-    const supabase = await createClient(); // Add `await` here
+    const supabase = await createServerClient(); // ✅ use server client
 
     // Check subscription status in your database
     const { data, error } = await supabase

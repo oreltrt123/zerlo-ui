@@ -13,7 +13,7 @@ import {
   Mic,
   Wand2,
   Pencil,
-  MoreHorizontal
+  MoreHorizontal,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
@@ -33,6 +33,8 @@ import "@/styles/custom-buttons.css"
 import TextareaAutosize from "react-textarea-autosize"
 import { StyleSelector } from "@/components/ui/style-selector"
 import { GameTypeSelector } from "@/components/ui/game-type-selector"
+import { useCredits } from "@/hooks/use-credits"
+import { toast } from "react-toastify"
 
 // Define Web Speech API types
 interface SpeechRecognition extends EventTarget {
@@ -187,6 +189,7 @@ interface ChatInputProps {
   isGenerating: boolean
   setEditMode: (mode: boolean) => void
   messages?: Array<{ id: string; sender: string; content: string; component_code?: string }>
+  onUpgradeClick: () => void
 }
 
 function detectSlashCommand(prompt: string): string | null {
@@ -202,6 +205,7 @@ export function ChatInput({
   isGenerating,
   setEditMode,
   messages = [],
+  onUpgradeClick,
 }: ChatInputProps) {
   const [model, setModel] = useState<string>("gemini-2.5-flash")
   const [language, setLanguage] = useState<string>("html")
@@ -222,6 +226,8 @@ export function ChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const { credits, loading: creditsLoading } = useCredits()
 
   useEffect(() => {
     const trimmedPrompt = inputPrompt.trim()
@@ -313,6 +319,13 @@ export function ChatInput({
 
   const handleSendClick = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    if (credits <= 0) {
+      toast.error("You need credits to send messages. Please upgrade to continue.")
+      onUpgradeClick()
+      return
+    }
+
     if (!isGenerating && inputPrompt.trim()) {
       console.log("Sending message with model:", model)
 
@@ -328,15 +341,7 @@ export function ChatInput({
         setInputPrompt(processedPrompt)
       }
 
-      onSendMessage(
-        model,
-        language,
-        discussMode,
-        uploadedFiles,
-        searchMode,
-        selectedStyle,
-        selectedGameType,
-      )
+      onSendMessage(model, language, discussMode, uploadedFiles, searchMode, selectedStyle, selectedGameType)
       setUploadedFiles([])
       setSearchMode(false)
       setSelectedSlashCommand(null)
@@ -569,10 +574,10 @@ export function ChatInput({
 
             {showSlashCommands && filteredSlashCommands.length > 0 && (
               <div
-              className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-[#303030] rounded-lg z-50 max-h-48 overflow-y-auto" 
-              style={{
-                boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
-              }}
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-[#303030] rounded-lg z-50 max-h-48 overflow-y-auto"
+                style={{
+                  boxShadow: "rgba(17, 17, 26, 0.05) 0px 1px 0px, rgba(17, 17, 26, 0.1) 0px 0px 8px",
+                }}
               >
                 <div className="p-2">
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 px-2">Slash Commands</div>
@@ -715,16 +720,20 @@ export function ChatInput({
                 className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none dark:text-white"
                 required={true}
                 placeholder={
-                  discussMode
-                    ? "Ask me anything about game development, 3D graphics, or professional game design..."
-                    : selectedSlashCommand
-                      ? "Continue typing your command..."
-                      : `Describe your dream ${selectedGameType.toUpperCase()} game - I'll create it with ${selectedStyle} button style. Try /edit, /add, /style, or /fix to modify existing games.`
+                  credits <= 0
+                    ? "You need credits to send messages. Click upgrade to continue."
+                    : discussMode
+                      ? "Ask me anything about game development, 3D graphics, or professional game design..."
+                      : selectedSlashCommand
+                        ? "Continue typing your command..."
+                        : `Describe your dream ${selectedGameType.toUpperCase()} game - I'll create it with ${selectedStyle} button style. Try /edit, /add, /style, or /fix to modify existing games.`
                 }
                 value={inputPrompt}
                 onChange={(e) => setInputPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
+                disabled={credits <= 0 && !creditsLoading}
               />
+
               <div className="flex p-3 gap-2 items-center">
                 <input
                   ref={fileInputRef}
@@ -797,7 +806,7 @@ export function ChatInput({
                         variant="ghost"
                         size="sm"
                         onClick={handleEnhanceClick}
-                        disabled={isEnhancing || !inputPrompt.trim()}
+                        disabled={isEnhancing || !inputPrompt.trim() || credits <= 0}
                         className={`h-8 w-full justify-start ${
                           isEnhancing
                             ? "bg-[#0099ff34] hover:bg-[#0099ff2c] dark:bg-blue-900/30 text-accent-foreground dark:text-accent-foreground"
@@ -828,7 +837,9 @@ export function ChatInput({
                 </Popover>
                 <div className="flex items-center flex-1 gap-2"></div>
                 <Button
-                  disabled={isGenerating || !inputPrompt.trim() || !model || (!discussMode && !language)}
+                  disabled={
+                    isGenerating || !inputPrompt.trim() || !model || (!discussMode && !language) || credits <= 0
+                  }
                   variant="default"
                   size="icon"
                   type="submit"
@@ -840,6 +851,19 @@ export function ChatInput({
             </div>
           </div>
         </form>
+
+        {credits <= 0 && !creditsLoading && (
+          <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-orange-800 dark:text-orange-200">
+                Youre out of credits! Upgrade to continue chatting.
+              </p>
+              <Button onClick={onUpgradeClick} size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                Upgrade Now
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

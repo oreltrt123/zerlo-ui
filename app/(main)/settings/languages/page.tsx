@@ -101,7 +101,12 @@ export default function LanguagesPage() {
   const currentTexts = translations[selectedLanguage] || translations.en
 
   return (
-    <div className="languages-settings">
+    <div className="languages-settings"     style={{
+      backgroundSize: "100% auto", // full width, auto height
+      backgroundPosition: "center -130px", // move image down
+      backgroundRepeat: "no-repeat",
+      backgroundImage: 'url("/assets/images/bg.jpg")'
+    }}>
     <style>{styles}</style>
       <h1 className="text-3xl font-bold mb-8 tracking-tight">{currentTexts.title}</h1>
       <div className="w-full max-w-md space-y-3">

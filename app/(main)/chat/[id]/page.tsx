@@ -21,6 +21,9 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import "@/styles/button.css"
 import "@/styles/loader3D.css"
+import { UpgradeModal } from "@/components/credits/upgrade-modal"
+import { SuccessModal } from "@/components/credits/success-modal"
+import { useCredits } from "@/hooks/use-credits"
 
 interface Message {
   id: string
@@ -60,7 +63,7 @@ export default function ChatIdPage({ params }: PageProps) {
   const [inputPrompt, setInputPrompt] = useState<string>("")
   const [selectedLanguage, setSelectedLanguage] = useState<string>("html")
   const [generatedComponent, setGeneratedComponent] = useState<string>("")
-  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings" | "assets">("preview")
+  const [viewMode, setViewMode] = useState<"preview" | "code" | "settings" | "assets" | "terminal">("preview")
   const [editMode, setEditMode] = useState<boolean>(false)
   const [loading, setLoading] = useState(true)
   const [isComponentVisible, setIsComponentVisible] = useState(false)
@@ -510,6 +513,33 @@ export default function ChatIdPage({ params }: PageProps) {
       const userMessageId = await saveMessage("user", userMessageContent)
       setMessages((prev) => prev.map((msg) => (msg.id === tempUserMessageId ? { ...msg, id: userMessageId } : msg)))
 
+      if (credits <= 0) {
+        toast.error("You need credits to send messages. Please upgrade to continue.")
+        setShowUpgradeModal(true)
+        return
+      }
+
+      if (user) {
+        try {
+          const response = await fetch("/api/credits/deduct", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to deduct credit")
+          }
+
+          refreshCredits() // Refresh credits display
+        } catch (error) {
+          console.error("Failed to deduct credit:", error)
+          toast.error("Failed to deduct credit. Please try again.")
+          return
+        }
+      }
+
       const currentChatHistory = [...messages, userMessage]
       messageContextRef.current = {
         aiMessageId: tempAiMessageId,
@@ -615,7 +645,7 @@ export default function ChatIdPage({ params }: PageProps) {
     setInputPrompt(assetPrompt)
 
     // Auto-send the message
-    await handleSendMessage("gemini", "html", false, undefined, false, "gaming", "3d",)
+    await handleSendMessage("gemini", "html", false, undefined, false, "gaming", "3d")
 
     toast.success(`Integrating ${asset.name} into your game!`)
   }
@@ -682,6 +712,19 @@ export default function ChatIdPage({ params }: PageProps) {
   useEffect(() => {
     initializeChat()
   }, [initializeChat])
+
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [creditsAdded, setCreditsAdded] = useState(0)
+
+  const { credits, refreshCredits } = useCredits()
+
+  const handleUpgradeSuccess = () => {
+    setShowUpgradeModal(false)
+    setCreditsAdded(30) // This should be dynamic based on plan
+    setShowSuccessModal(true)
+    refreshCredits()
+  }
 
   if (loading) {
     return (
@@ -770,6 +813,7 @@ export default function ChatIdPage({ params }: PageProps) {
               window.open(urls[target], "_blank")
             }}
             onSettingsClick={handleSettingsClick}
+            onUpgradeClick={() => setShowUpgradeModal(true)}
           />
           <div
             ref={chatMessagesRef}
@@ -789,6 +833,7 @@ export default function ChatIdPage({ params }: PageProps) {
                 isGenerating={isGenerating}
                 setEditMode={setEditMode}
                 messages={messages}
+                onUpgradeClick={() => setShowUpgradeModal(true)}
               />
             </div>
           </div>
@@ -820,6 +865,12 @@ export default function ChatIdPage({ params }: PageProps) {
           />
         </div>
       )}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onSuccess={handleUpgradeSuccess}
+      />
+      <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} creditsAdded={creditsAdded} />
     </div>
   )
 }
